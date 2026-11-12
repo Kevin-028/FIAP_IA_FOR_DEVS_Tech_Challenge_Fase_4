@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Vídeo clínico{% endblock %}
+{% block page_heading %}Análise de vídeo{% endblock %}
+{% block content %}
+<p class="text-muted">{{ openpose_note }}</p>
+<form id="video-form" class="card fiap-card card-body mb-3" onsubmit="return false;">
+  <label class="form-label" for="patient_id">Paciente da base</label>
+  <select class="form-select mb-3" id="patient_id" name="patient_id">
+    {% for patient in patients %}
+    <option value="{{ patient.id }}" {% if patient.id == patient_id %}selected{% endif %}>{{ patient.id }} · {{ patient.diagnosis }}</option>
+    {% endfor %}
+    {% if not patients %}<option value="p000003">p000003</option>{% endif %}
+  </select>
+  {% if record_error %}<p class="text-danger">{{ record_error }}</p>{% endif %}
+
+  <label class="form-label" for="file">Arquivo da sessão</label>
+  <input class="form-control mb-3" id="file" name="file" type="file" accept="video/*">
+
+  <div class="mb-3">
+    <video id="preview" class="fiap-video-preview" playsinline muted></video>
+  </div>
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <button class="btn fiap-btn-outline" id="cam-start" type="button">Abrir webcam</button>
+    <button class="btn fiap-btn-outline" id="cam-rec" type="button" disabled>Gravar 5 s</button>
+    <button class="btn fiap-btn-primary" id="analyze" type="button">Analisar</button>
+  </div>
+  <p class="small text-muted mb-0">Grave um gesto de abdução do ombro (braço levantado) ou envie um arquivo. O relatório vai para a fila de alertas.</p>
+</form>
+<div class="card fiap-card card-body">
+  <h2 class="h6">Relatório</h2>
+  <pre id="video-out" class="fiap-code-block small mb-0">Aguardando…</pre>
+  <p class="mt-2 mb-0"><a href="/alertas">Ver alertas</a></p>
+</div>
+<script>
+let stream = null;
+let recordedBlob = null;
+
+function patientId() {
+  return document.getElementById("patient_id").value;
+}
+
+function showReport(body) {
+  const report = body.report || {};
+  const lines = [
+    report.summary || "",
+    report.openpose_note || "",
+    "",
+    "Desvios: " + JSON.stringify(report.deviations || [], null, 2),
+    "Zonas: " + JSON.stringify(report.zone_events || [], null, 2),
+    "Modelos: " + JSON.stringify(report.models || []),
+  ];
+  if (body.warning) lines.push("", "Aviso YOLO: " + body.warning);
+  if (body.new_alerts && body.new_alerts.length) {
+    lines.push("", "Alertas novos:");
+    body.new_alerts.forEach((item) => lines.push("- " + item));
+  }
+  document.getElementById("video-out").textContent = lines.filter((x) => x !== undefined).join("\n");
+}
+
+async function sendVideo(blob, filename) {
+  const out = document.getElementById("video-out");
+  out.textContent = "Analisando…";
+  const data = new FormData();
+  data.append("patient_id", patientId());
+  data.append("file", blob, filename);
+  const response = await fetch("/api/fase4/video/arquivo", { method: "POST", body: data });
+  showReport(await response.json());
+}
+
+document.getElementById("cam-start").addEventListener("click", async () => {
+  stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+  const preview = document.getElementById("preview");
+  preview.srcObject = stream;
+  await preview.play();
+  document.getElementById("cam-rec").disabled = false;
+});
+
+document.getElementById("cam-rec").addEventListener("click", async () => {
+  if (!stream) return;
+  const button = document.getElementById("cam-rec");
+  button.disabled = true;
+  const chunks = [];
+  const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+  recorder.ondataavailable = (event) => { if (event.data.size) chunks.push(event.data); };
+  const done = new Promise((resolve) => { recorder.onstop = resolve; });
+  recorder.start();
+  await new Promise((resolve) => setTimeout(resolve, 5000));
+  recorder.stop();
+  await done;
+  recordedBlob = new Blob(chunks, { type: "video/webm" });
+  button.disabled = false;
+  document.getElementById("video-out").textContent = "Gravação pronta (" + Math.round(recordedBlob.size / 1024) + " KB). Clique em Analisar.";
+});
+
+document.getElementById("analyze").addEventListener("click", async () => {
+  const file = document.getElementById("file").files[0];
+  if (file) {
+    await sendVideo(file, file.name);
+    return;
+  }
+  if (recordedBlob) {
+    await sendVideo(recordedBlob, "webcam.webm");
+    return;
+  }
+  document.getElementById("video-out").textContent = "Envie um arquivo ou grave 5 segundos na webcam.";
+});
+</script>
+{% endblock %}

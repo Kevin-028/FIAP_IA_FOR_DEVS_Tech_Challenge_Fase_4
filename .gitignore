@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+*.db
+models/yolo/*.pt
+hospital_data/fase4/challenge-2019/training/training_setB/
+hospital_data/fase4/challenge-2019/training/training_setA/*
+!hospital_data/fase4/challenge-2019/training/training_setA/p000003.psv
+!hospital_data/fase4/challenge-2019/training/training_setA/p000057.psv
+hospital_data/fase4/samples/*.mp4
+hospital_data/*.db
+yolov8n.pt
+runs/
+.idea/

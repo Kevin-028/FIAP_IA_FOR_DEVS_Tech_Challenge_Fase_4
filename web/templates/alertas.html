@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Alertas{% endblock %}
+{% block page_heading %}Alertas da equipe{% endblock %}
+{% block content %}
+<p class="text-muted">Fila multimodal da demo educacional. Operador “Equipe”: reconhecer e fechar sem login.</p>
+
+<div class="mb-3 d-flex flex-wrap gap-2">
+  <a class="btn btn-sm {% if status_filter == 'open' %}fiap-btn-primary{% else %}btn-outline-secondary{% endif %}" href="/alertas?status=open">Abertos</a>
+  <a class="btn btn-sm {% if status_filter == 'acked' %}fiap-btn-primary{% else %}btn-outline-secondary{% endif %}" href="/alertas?status=acked">Reconhecidos</a>
+  <a class="btn btn-sm {% if status_filter == 'closed' %}fiap-btn-primary{% else %}btn-outline-secondary{% endif %}" href="/alertas?status=closed">Fechados</a>
+  <a class="btn btn-sm {% if not status_filter %}fiap-btn-primary{% else %}btn-outline-secondary{% endif %}" href="/alertas">Todos</a>
+</div>
+
+<div class="card fiap-card">
+  <div class="card-header fiap-card-header">Equipe</div>
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>Quando</th>
+          <th>Paciente</th>
+          <th>Severidade</th>
+          <th>Motivo</th>
+          <th>Fonte</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in alerts %}
+        <tr>
+          <td class="small">{{ a.created_at }}</td>
+          <td>{{ a.patient_id }}</td>
+          <td>{{ a.severity }}</td>
+          <td>{{ a.reason }}</td>
+          <td>{{ a.source }}</td>
+          <td>{{ a.status }}</td>
+          <td class="text-nowrap">
+            {% if a.status == 'open' %}
+            <form class="d-inline" method="post" action="/alertas/{{ a.id }}/ack">
+              <input type="hidden" name="next" value="/alertas?status={{ status_filter or 'open' }}">
+              <button class="btn btn-sm btn-outline-secondary" type="submit">Reconhecer</button>
+            </form>
+            {% endif %}
+            {% if a.status != 'closed' %}
+            <form class="d-inline" method="post" action="/alertas/{{ a.id }}/close">
+              <input type="hidden" name="next" value="/alertas?status={{ status_filter or 'open' }}">
+              <button class="btn btn-sm fiap-btn-primary" type="submit">Fechar</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-muted">Nenhum alerta neste filtro.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

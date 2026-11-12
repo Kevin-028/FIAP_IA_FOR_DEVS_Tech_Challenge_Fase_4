@@ -1,0 +1,142 @@
+{
+  "video": {
+    "exercise": "shoulder_abduction",
+    "models": [
+      "mediapipe-pose",
+      "yolov8n"
+    ],
+    "openpose_note": "MediaPipe Pose cumpre a tarefa de keypoints citada como OpenPose e roda no Windows sem compilar o OpenPose.",
+    "frame_count": 1,
+    "deviations": [
+      {
+        "kind": "overshoot",
+        "frame": 0,
+        "detail": "abducao 180 graus, alvo 90"
+      }
+    ],
+    "zone_events": [
+      {
+        "kind": "critical_object",
+        "label": "cell phone",
+        "detail": "cell phone dentro do campo critico"
+      }
+    ],
+    "summary": "Desvio detectado em 2 evento(s) de shoulder_abduction."
+  },
+  "audio_vocal": {
+    "pause_ratio": 0.48484848484848486,
+    "speech_rms": 0.13965364122701895,
+    "fatigue": true,
+    "respiratory_effort": false
+  },
+  "vitals": [
+    {
+      "recorded_at": "2026-04-05T01:00:00+00:00",
+      "signal": "spo2",
+      "value": 88.0,
+      "severity": "high",
+      "rule": "spo2_low"
+    },
+    {
+      "recorded_at": "2026-04-05T01:00:00+00:00",
+      "signal": "hr",
+      "value": 132.0,
+      "severity": "high",
+      "rule": "hr_high"
+    }
+  ],
+  "prescriptions": [
+    {
+      "recorded_at": "2026-04-03T08:00:00+00:00",
+      "drug": "varfarina",
+      "severity": "high",
+      "rule": "high_alert_start",
+      "detail": "inicio de varfarina"
+    },
+    {
+      "recorded_at": "2026-04-03T20:00:00+00:00",
+      "drug": "AAS",
+      "severity": "high",
+      "rule": "dose_jump",
+      "detail": "dose de AAS de 100 mg para 300 mg"
+    }
+  ],
+  "movement": [
+    {
+      "recorded_at": "2026-04-06T02:00:00+00:00",
+      "severity": "high",
+      "rule": "immobility",
+      "detail": "supine/bed por 8 h"
+    },
+    {
+      "recorded_at": "2026-04-06T02:30:00+00:00",
+      "severity": "high",
+      "rule": "night_exit",
+      "detail": "saida noturna no corredor"
+    }
+  ],
+  "fusion": {
+    "level": "high",
+    "findings": [
+      {
+        "source": "fase4.video",
+        "severity": "high",
+        "reason": "Desvio postural: abducao 180 graus, alvo 90"
+      },
+      {
+        "source": "fase4.video",
+        "severity": "high",
+        "reason": "Area critica: cell phone dentro do campo critico"
+      },
+      {
+        "source": "fase4.audio",
+        "severity": "high",
+        "reason": "Fadiga vocal"
+      },
+      {
+        "source": "fase4.audio",
+        "severity": "high",
+        "reason": "Sentimento negativo com termo critico: falta de ar"
+      },
+      {
+        "source": "fase4.vitals",
+        "severity": "high",
+        "reason": "Sinal vital spo2 88.0 em 2026-04-05T01:00:00+00:00"
+      },
+      {
+        "source": "fase4.vitals",
+        "severity": "high",
+        "reason": "Sinal vital hr 132.0 em 2026-04-05T01:00:00+00:00"
+      },
+      {
+        "source": "fase4.prescription",
+        "severity": "high",
+        "reason": "Prescricao: inicio de varfarina"
+      },
+      {
+        "source": "fase4.prescription",
+        "severity": "high",
+        "reason": "Prescricao: dose de AAS de 100 mg para 300 mg"
+      },
+      {
+        "source": "fase4.movement",
+        "severity": "high",
+        "reason": "Movimentacao: supine/bed por 8 h"
+      },
+      {
+        "source": "fase4.movement",
+        "severity": "high",
+        "reason": "Movimentacao: saida noturna no corredor"
+      }
+    ],
+    "prescribes": false,
+    "chart_excerpt": "paciente sintetico"
+  },
+  "datasets": {
+    "urls": [
+      "https://physionet.org/",
+      "https://research.google.com/audioset/"
+    ],
+    "note": "Pacientes p000057 e p000003: PhysioNet Challenge 2019 (HR, O2Sat, SBP, DBP). Prescricao e movimento sao evolucao clinica do plantao no mesmo ID. AudioSet nao e consulta medica; o demo usa fala sintetizada."
+  }
+}

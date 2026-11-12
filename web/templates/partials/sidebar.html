@@ -1,0 +1,25 @@
+<aside class="fiap-sidebar" id="fiapSidebar" aria-label="Menu Fase 4">
+  <div class="fiap-sidebar-brand">
+    <a href="/fase4" class="fiap-sidebar-brand-link" title="Hospital · Fase 4">
+      <span class="fiap-logo-badge">FIAP</span>
+      <span class="fiap-sidebar-brand-text">
+        <strong>Hospital</strong>
+        <small>Fase 4</small>
+      </span>
+    </a>
+  </div>
+  <nav class="fiap-sidebar-nav">
+    <div class="fiap-nav-group">
+      <div class="fiap-nav-group-title">Consulta</div>
+      <a class="fiap-side-link {{ 'active' if nav_multimodal }}" href="/fase4">Plantão</a>
+      <a class="fiap-side-link {{ 'active' if nav_video }}" href="/fase4/video">Vídeo</a>
+      <a class="fiap-side-link {{ 'active' if nav_audio }}" href="/fase4/audio">Áudio</a>
+      <a class="fiap-side-link {{ 'active' if nav_anomalias }}" href="/fase4/anomalias">Anomalias</a>
+      <a class="fiap-side-link {{ 'active' if nav_monitor }}" href="/fase4/monitor">Monitor</a>
+    </div>
+    <div class="fiap-nav-group">
+      <div class="fiap-nav-group-title">Equipe</div>
+      <a class="fiap-side-link {{ 'active' if nav_alertas }}" href="/alertas">Alertas</a>
+    </div>
+  </nav>
+</aside>

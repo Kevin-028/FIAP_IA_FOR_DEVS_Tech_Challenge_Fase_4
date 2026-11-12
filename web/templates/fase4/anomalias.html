@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Anomalias{% endblock %}
+{% block page_heading %}Anomalias do plantão{% endblock %}
+{% block content %}
+<form class="card fiap-card card-body mb-3" method="get">
+  <label class="form-label" for="patient_id">Paciente da base</label>
+  <select class="form-select" id="patient_id" name="patient_id" onchange="this.form.submit()">
+    {% for patient in patients %}
+    <option value="{{ patient.id }}" {% if patient.id == patient_id %}selected{% endif %}>{{ patient.id }} · {{ patient.diagnosis }}</option>
+    {% endfor %}
+    {% if not patients %}<option value="{{ patient_id }}">{{ patient_id }}</option>{% endif %}
+  </select>
+  <label class="form-label mt-2" for="record">Outro registro da base</label>
+  <div class="input-group">
+    <input class="form-control" id="record" name="record" placeholder="p000010">
+    <button class="btn fiap-btn-outline" type="submit">Carregar</button>
+  </div>
+</form>
+{% if record_error %}<p class="text-danger">{{ record_error }}</p>{% endif %}
+{% if vital_source %}
+<p class="text-muted">{{ vital_source }}</p>
+{% endif %}
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card fiap-card h-100">
+      <div class="card-header fiap-card-header">Sinais vitais</div>
+      <ul class="list-group list-group-flush">
+        {% for item in vitals %}
+        <li class="list-group-item">{{ item.rule }} · {{ item.signal }} {{ item.value }}</li>
+        {% else %}
+        <li class="list-group-item text-muted">Nenhuma.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card fiap-card h-100">
+      <div class="card-header fiap-card-header">Prescrição</div>
+      <ul class="list-group list-group-flush">
+        {% for item in prescriptions %}
+        <li class="list-group-item">{{ item.rule }} · {{ item.detail }}</li>
+        {% else %}
+        <li class="list-group-item text-muted">Nenhuma.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card fiap-card h-100">
+      <div class="card-header fiap-card-header">Movimentação</div>
+      <ul class="list-group list-group-flush">
+        {% for item in movement %}
+        <li class="list-group-item">{{ item.rule }} · {{ item.detail }}</li>
+        {% else %}
+        <li class="list-group-item text-muted">Nenhuma.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+<div class="mt-3 d-flex flex-wrap gap-2 align-items-center">
+  <button class="btn fiap-btn-primary" id="publish" type="button">Gerar alertas deste plantão</button>
+  <a class="btn fiap-btn-outline" href="/alertas">Fila da equipe</a>
+  <a class="btn fiap-btn-outline" href="/fase4/monitor?patient_id={{ patient_id }}">Monitor</a>
+</div>
+<pre id="publish-out" class="fiap-code-block small mt-3 mb-0"></pre>
+<p class="text-muted mt-3">Vitais vêm do PhysioNet Challenge 2019. Prescrição e movimentação são a evolução clínica do plantão no mesmo registro (a base aberta não traz essas colunas).</p>
+<script>
+document.getElementById("publish").addEventListener("click", async () => {
+  const out = document.getElementById("publish-out");
+  const patient = document.getElementById("patient_id").value;
+  out.textContent = "Publicando…";
+  const response = await fetch("/api/fase4/anomalias/alertas", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ patient_id: patient }),
+  });
+  const body = await response.json();
+  out.textContent = (body.new_alerts || []).join("\n") || "Nenhum alerta novo (já existiam ou plantão estável).";
+});
+</script>
+{% endblock %}

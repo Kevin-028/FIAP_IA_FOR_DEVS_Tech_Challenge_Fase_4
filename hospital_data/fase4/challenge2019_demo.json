@@ -1,0 +1,12 @@
+{
+  "p000057": {
+    "set": "training_setA",
+    "role": "stable",
+    "hours": 26
+  },
+  "p000003": {
+    "set": "training_setA",
+    "role": "alert",
+    "hours": 36
+  }
+}
