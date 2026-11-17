@@ -21,7 +21,6 @@ Fase_4/
 ├── tests/               unit/{domain, application} · integration/{infrastructure, web} · test_arquitetura.py
 ├── scripts/             downloads de modelos e da base PhysioNet, áudio de demonstração
 ├── analises/            avaliação offline (números do relatório) e notebooks
-├── docs/                relatório, requisitos, desenho de domínio, roteiro do vídeo, ADRs
 ├── hospital_data/       banco SQLite, registros PhysioNet, recortes das marcas de atenção (gerado)
 └── models/              pesos baixados: pose, yolo, feat (gerado, fora do git)
 ```
@@ -146,12 +145,3 @@ Abra **http://127.0.0.1:5000** no Chrome ou Edge. No VS Code: **Run and Debug �
 | Modelo facial não carrega | O MediaPipe Face vem de CDN: precisa de internet na primeira carga |
 | "Amostra ausente" no áudio | `python scripts/make_demo_audio.py` |
 | Treino diz "corpus insuficiente" | `python scripts/download_challenge2019.py` |
-
----
-
-## Documentação
-
-- [docs/RELATORIO_TECNICO_FASE4.md](docs/RELATORIO_TECNICO_FASE4.md) — relatório técnico
-- [docs/ROTEIRO_VIDEO_FASE4.md](docs/ROTEIRO_VIDEO_FASE4.md) — roteiro do vídeo (≤ 15 min)
-- [docs/DESENHO_DOMINIO_CONSULTORIO.md](docs/DESENHO_DOMINIO_CONSULTORIO.md) e [docs/REQUISITOS_CONSULTORIO.md](docs/REQUISITOS_CONSULTORIO.md)
-- ADRs: [001](docs/adr/adr-001-agregado-alerta-de-dor.md) · [002](docs/adr/adr-002-cascata-dor-facial-wong-baker.md) · [003](docs/adr/adr-003-solucao-em-quatro-projetos.md) · [004](docs/adr/adr-004-gravar-duvidas-da-dor.md)
