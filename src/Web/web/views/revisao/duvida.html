@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "_macros.html" import veredito %}
+{% block title %}Revisar marca{% endblock %}
+{% block content %}
+<div class="trilha"><a href="/revisao">Revisão</a> / {{ duvida.paciente_nome or 'Paciente' }}</div>
+<div class="cabecalho">
+  <div><h1>Marca de atenção {{ veredito(duvida) }}</h1>
+    <p>{{ duvida.paciente_nome }} · {{ duvida.criado_em|data_hora }} · {{ duvida.duracao_s }} s gravados neste computador (2 s antes e depois da suspeita)</p></div>
+  {% if duvida.paciente_id %}<a class="btn" href="/pacientes/{{ duvida.paciente_id }}">Ficha do paciente</a>{% endif %}
+</div>
+{% if erro %}<p class="aviso aviso-perigo" role="alert">{{ erro }}</p>{% endif %}
+<div class="grade grade-atender">
+  <section class="cartao" aria-labelledby="t-recorte">
+    <div class="cartao-cab"><h2 id="t-recorte">Recorte</h2><button class="btn btn-sm" type="button" id="pausar">Pausar</button></div>
+    <div class="cartao-corpo">
+      <div class="cam-box"><img id="quadro" class="cam-video" style="transform:none" src="/revisao/{{ duvida.id }}/quadros/0.jpg" alt="Rosto do paciente no momento da suspeita"></div>
+      <input type="range" id="linha-do-tempo" min="0" max="{{ duvida.quadros - 1 }}" value="0" aria-label="Quadro" style="width:100%;margin-top:.6rem">
+      <div class="cam-leitura">
+        <div><span>Câmera (estágio 1)</span><strong>{% if duvida.wong_baker_estimado is not none %}face {{ duvida.wong_baker_estimado }} · PSPI +{{ '%.1f'|format(duvida.dor_relativa) }}{% else %}—{% endif %}</strong></div>
+        <div><span>Validador (estágio 2, apoio)</span><strong id="veredito-detalhe">{{ duvida.veredito_texto }}</strong></div>
+        <div><span>Quadros</span><strong>{{ duvida.quadros }}</strong></div>
+      </div>
+    </div>
+  </section>
+  <section class="cartao" aria-labelledby="t-classificar">
+    <div class="cartao-cab"><h2 id="t-classificar">Sua classificação</h2>{% if not duvida.pendente %}<span class="pill pill-sucesso">Classificada</span>{% endif %}</div>
+    <form class="cartao-corpo pilha" method="post" action="/revisao/{{ duvida.id }}">
+      <fieldset style="border:0;padding:0;margin:0">
+        <legend class="rotulo">Dor real (Wong-Baker)</legend>
+        <div class="wb-escala">
+          {% for valor, emoji in faces %}
+          <label class="wb-face" style="cursor:pointer"><input type="radio" name="face" value="{{ valor }}" required class="d-none" {{ 'checked' if duvida.face_classificada == valor }}><span aria-hidden="true">{{ emoji }}</span><small>{{ valor }}</small></label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <fieldset style="border:0;padding:0;margin:0">
+        <legend class="rotulo">Categoria</legend>
+        <div class="linha-form">
+          {% for chave, nome in categorias.items() %}
+          <label class="checar"><input type="radio" name="categoria" value="{{ chave }}" required {{ 'checked' if duvida.categoria == chave }}> {{ nome }}</label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <div><label class="rotulo" for="observacao">Observação</label>
+        <textarea class="campo" id="observacao" name="observacao" maxlength="500" placeholder="O que você viu no recorte">{{ duvida.observacao or '' }}</textarea></div>
+      <div class="acoes"><button class="btn btn-primario" type="submit">Salvar e ir para a próxima</button><a class="btn" href="/revisao">Voltar à lista</a></div>
+    </form>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  const total = {{ duvida.quadros }}, base = "/revisao/{{ duvida.id }}/quadros/";
+  const img = document.getElementById("quadro"), linha = document.getElementById("linha-do-tempo"), botao = document.getElementById("pausar");
+  const imagens = Array.from({ length: total }, (_, i) => { const im = new Image(); im.src = base + i + ".jpg"; return im; });
+  let atual = 0, tocando = true;
+  const mostrar = (i) => { atual = i; img.src = imagens[i].src; linha.value = i; };
+  setInterval(() => { if (tocando) mostrar((atual + 1) % total); }, Math.round({{ duvida.duracao_s }} * 1000 / total));
+  botao.addEventListener("click", () => { tocando = !tocando; botao.textContent = tocando ? "Pausar" : "Continuar"; });
+  linha.addEventListener("input", () => { tocando = false; botao.textContent = "Continuar"; mostrar(Number(linha.value)); });
+  {% if duvida.avaliando %}
+  // o validador ainda está avaliando: atualiza só o veredito, sem mexer no formulário do médico
+  const espera = setInterval(async () => {
+    try {
+      const marcas = await fetch("/api/sessoes/{{ duvida.sessao_id }}/duvidas").then((r) => r.json());
+      const marca = marcas.find((m) => m.id === "{{ duvida.id }}");
+      if (!marca || marca.avaliando) return;
+      clearInterval(espera);
+      document.getElementById("veredito-detalhe").textContent = marca.veredito_texto;
+      const pill = document.querySelector('[data-veredito="{{ duvida.id }}"]');
+      pill.textContent = marca.veredito_texto;
+      pill.className = "pill" + (marca.veredito === "confirmada" ? " pill-perigo" : "");
+    } catch (_) { /* tenta de novo no próximo ciclo */ }
+  }, 3000);
+  {% endif %}
+  document.querySelectorAll('.wb-escala input[name="face"]').forEach((r) => {
+    const marcar = () => document.querySelectorAll(".wb-escala .wb-face").forEach((l) => l.classList.toggle("confirmada", l.querySelector("input").checked));
+    r.addEventListener("change", marcar); marcar();
+  });
+})();
+</script>
+{% endblock %}

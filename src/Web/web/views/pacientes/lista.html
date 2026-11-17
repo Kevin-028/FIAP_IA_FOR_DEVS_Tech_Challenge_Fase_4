@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}Pacientes{% endblock %}
+{% block content %}
+<div class="cabecalho">
+  <div><h1>Pacientes</h1><p>Encontre o paciente ou cadastre um novo para iniciar a consulta.</p></div>
+</div>
+{% if erro %}<p class="aviso aviso-perigo" role="alert">{{ erro }}</p>{% endif %}
+<div class="grade grade-atender">
+  <section class="cartao" aria-labelledby="t-lista">
+    <div class="cartao-cab">
+      <h2 id="t-lista">{{ 'Resultado da busca' if busca else 'Todos os pacientes' }}</h2>
+      <form class="linha-form" method="get" action="/pacientes" role="search">
+        <label class="d-none" for="q">Buscar</label>
+        <input class="campo" id="q" name="q" value="{{ busca }}" placeholder="Buscar pelo nome">
+        <button class="btn" type="submit">Buscar</button>
+      </form>
+    </div>
+    <ul class="lista">
+      {% for p in pacientes %}
+      <li>
+        <div class="paciente-cab">
+          <div class="avatar" aria-hidden="true">{{ m.iniciais(p.nome) }}</div>
+          <div><a class="lista-principal" href="/pacientes/{{ p.id }}">{{ p.nome }}</a>
+            {% if p.id in em_andamento %}<div class="lista-sec"><span class="pill pill-primaria">Consulta em andamento</span></div>{% endif %}</div>
+        </div>
+        <div class="acoes">
+          {% if p.id in em_andamento %}
+          <a class="btn btn-sm btn-primario" href="/consulta/{{ em_andamento[p.id] }}">Continuar</a>
+          {% else %}
+          <form method="post" action="/sessoes"><input type="hidden" name="paciente_id" value="{{ p.id }}"><button class="btn btn-sm btn-primario" type="submit">Iniciar consulta</button></form>
+          {% endif %}
+          <a class="btn btn-sm" href="/pacientes/{{ p.id }}">Ficha</a>
+        </div>
+      </li>
+      {% else %}
+      <li class="lista-vazia">{{ 'Ninguém encontrado com esse nome. Cadastre ao lado.' if busca else 'Nenhum paciente cadastrado ainda.' }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  <section class="cartao" aria-labelledby="t-novo">
+    <div class="cartao-cab"><h2 id="t-novo">Cadastrar paciente</h2></div>
+    <form class="cartao-corpo" method="post" action="/pacientes">
+      <label class="rotulo" for="nome">Nome completo</label>
+      <input class="campo" id="nome" name="nome" required value="{{ busca }}" autocomplete="off">
+      <p class="ajuda">Só o nome é pedido. CPF e diagnóstico não fazem parte do cadastro.</p>
+      <button class="btn btn-primario" type="submit">Cadastrar e abrir ficha</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

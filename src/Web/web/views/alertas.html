@@ -1,60 +1,69 @@
 {% extends "base.html" %}
+{% import "_macros.html" as m %}
 {% block title %}Alertas{% endblock %}
-{% block page_heading %}Alertas da equipe{% endblock %}
 {% block content %}
-<p class="text-muted">Fila multimodal da demo educacional. Operador “Equipe”: reconhecer e fechar sem login.</p>
+<div class="cabecalho"><div><h1>Alertas</h1><p>Tudo que pede uma ação da equipe, por origem.</p></div></div>
+<nav class="abas" aria-label="Origem dos alertas">
+  <a class="aba {{ 'ativa' if aba == 'consultas' }}" href="/alertas?aba=consultas">Consultas{% if dor %} <span class="contador">{{ dor|length }}</span>{% endif %}</a>
+  <a class="aba {{ 'ativa' if aba == 'internacao' }}" href="/alertas?aba=internacao">Internação{% if abertos_internacao %} <span class="contador">{{ abertos_internacao }}</span>{% endif %}</a>
+  <a class="aba {{ 'ativa' if aba == 'anomalia' }}" href="/alertas?aba=anomalia">Anomalia de padrão</a>
+</nav>
 
-<div class="mb-3 d-flex flex-wrap gap-2">
-  <a class="btn btn-sm {% if status_filter == 'open' %}fiap-btn-primary{% else %}btn-outline-secondary{% endif %}" href="/alertas?status=open">Abertos</a>
-  <a class="btn btn-sm {% if status_filter == 'acked' %}fiap-btn-primary{% else %}btn-outline-secondary{% endif %}" href="/alertas?status=acked">Reconhecidos</a>
-  <a class="btn btn-sm {% if status_filter == 'closed' %}fiap-btn-primary{% else %}btn-outline-secondary{% endif %}" href="/alertas?status=closed">Fechados</a>
-  <a class="btn btn-sm {% if not status_filter %}fiap-btn-primary{% else %}btn-outline-secondary{% endif %}" href="/alertas">Todos</a>
-</div>
+{% if aba == 'consultas' %}
+<section class="cartao">
+  <ul class="lista">
+    {% for a in dor %}
+    <li class="alerta-item {{ 'ciente' if a.estado == 'ciente' }}">
+      <div><div class="lista-principal">{{ a.paciente_nome }} · {{ m.origem(a.origem) }}</div><div class="lista-sec">{{ a.descricao_sinal }} · {{ a.criado_em|data_hora }}</div></div>
+      <div class="acoes">{{ m.estado_alerta(a.estado) }}
+        {% if a.estado == 'aberto' %}<button class="btn btn-sm" data-acao="/api/alertas-dor/{{ a.id }}/ciencia">Ciente</button>{% endif %}
+        <button class="btn btn-sm" data-acao="/api/alertas-dor/{{ a.id }}/encerrar">Encerrar</button>
+        <a class="btn btn-sm" href="/consulta/{{ a.sessao_id }}">Abrir consulta</a></div>
+    </li>
+    {% else %}
+    <li class="vazio"><h3>Nenhum alerta de dor ativo</h3><p>Alertas abertos nas consultas aparecem aqui.</p></li>
+    {% endfor %}
+  </ul>
+</section>
 
-<div class="card fiap-card">
-  <div class="card-header fiap-card-header">Equipe</div>
-  <div class="table-responsive">
-    <table class="table mb-0 align-middle">
-      <thead>
-        <tr>
-          <th>Quando</th>
-          <th>Paciente</th>
-          <th>Severidade</th>
-          <th>Motivo</th>
-          <th>Fonte</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for a in alerts %}
-        <tr>
-          <td class="small">{{ a.created_at }}</td>
-          <td>{{ a.patient_id }}</td>
-          <td>{{ a.severity }}</td>
-          <td>{{ a.reason }}</td>
-          <td>{{ a.source }}</td>
-          <td>{{ a.status }}</td>
-          <td class="text-nowrap">
-            {% if a.status == 'open' %}
-            <form class="d-inline" method="post" action="/alertas/{{ a.id }}/ack">
-              <input type="hidden" name="next" value="/alertas?status={{ status_filter or 'open' }}">
-              <button class="btn btn-sm btn-outline-secondary" type="submit">Reconhecer</button>
-            </form>
-            {% endif %}
-            {% if a.status != 'closed' %}
-            <form class="d-inline" method="post" action="/alertas/{{ a.id }}/close">
-              <input type="hidden" name="next" value="/alertas?status={{ status_filter or 'open' }}">
-              <button class="btn btn-sm fiap-btn-primary" type="submit">Fechar</button>
-            </form>
-            {% endif %}
-          </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="7" class="text-muted">Nenhum alerta neste filtro.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+{% elif aba == 'internacao' %}
+<nav class="acoes espaco" aria-label="Filtrar">
+  {% for valor, nome in [('open', 'Abertos'), ('acked', 'Reconhecidos'), ('closed', 'Fechados'), ('', 'Todos')] %}
+  <a class="btn btn-sm {{ 'btn-primario' if (status_filter or '') == valor }}" href="/alertas?aba=internacao{% if valor %}&status={{ valor }}{% endif %}">{{ nome }}</a>
+  {% endfor %}
+</nav>
+<section class="cartao"><div class="rolar"><table class="tabela">
+  <thead><tr><th>Quando</th><th>Paciente</th><th>Motivo</th><th>Fonte</th><th>Estado</th><th></th></tr></thead>
+  <tbody>
+  {% for a in alerts %}
+  <tr>
+    <td>{{ a.created_at|data_hora }}</td><td>{{ a.patient_id }}</td><td>{{ a.reason }}</td><td>{{ a.source }}</td><td>{{ m.estado_alerta(a.status) }}</td>
+    <td class="acoes">
+      {% if a.status == 'open' %}<form method="post" action="/alertas/{{ a.id }}/ack"><input type="hidden" name="next" value="/alertas?aba=internacao"><button class="btn btn-sm" type="submit">Reconhecer</button></form>{% endif %}
+      {% if a.status != 'closed' %}<form method="post" action="/alertas/{{ a.id }}/close"><input type="hidden" name="next" value="/alertas?aba=internacao"><button class="btn btn-sm" type="submit">Fechar</button></form>{% endif %}
+    </td>
+  </tr>
+  {% else %}<tr><td colspan="6" class="text-muted">Nenhum alerta neste filtro.</td></tr>{% endfor %}
+  </tbody>
+</table></div></section>
+
+{% else %}
+<section class="cartao"><div class="rolar"><table class="tabela">
+  <thead><tr><th>Quando</th><th>Série</th><th>Sinais</th><th>Estado</th></tr></thead>
+  <tbody>
+  {% for a in anomalias %}
+  <tr><td>{{ a.criado_em|data_hora }}</td><td>{{ a.serie_id }}</td><td>{{ (a.sinais or '')|replace('_', ' ') }}</td><td>{{ m.estado_alerta(a.estado) }}</td></tr>
+  {% else %}<tr><td colspan="4" class="text-muted">Nenhuma série anômala avaliada. Use a tela Sistema para treinar e avaliar.</td></tr>{% endfor %}
+  </tbody>
+</table></div></section>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll("[data-acao]").forEach((b) => b.addEventListener("click", async () => {
+  b.disabled = true;
+  await fetch(b.dataset.acao, { method: "POST" });
+  location.reload();
+}));
+</script>
 {% endblock %}

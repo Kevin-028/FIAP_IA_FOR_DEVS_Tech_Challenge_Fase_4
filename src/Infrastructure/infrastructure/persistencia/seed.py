@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from hospital.db import (
+from infrastructure.persistencia.banco import (
     connect,
     init_db,
     insert_movement,
@@ -80,7 +80,7 @@ def apply(conn) -> None:
     init_db(conn)
     for table in ("vitals", "prescriptions", "movement_events", "modality_reports"):
         conn.execute(f"DELETE FROM {table}")
-    from multimodal.challenge2019 import demo_series
+    from infrastructure.physionet.challenge2019 import demo_series
 
     series = demo_series()
     if series:

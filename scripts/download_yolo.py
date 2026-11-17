@@ -1,10 +1,10 @@
-"""Baixa yolov8n.pt para models/yolo. Uso: python -m multimodal.download_yolo"""
+"""Baixa yolov8n.pt para models/yolo. Uso: python scripts/download_yolo.py"""
 from __future__ import annotations
 
 import os
 import shutil
 
-from multimodal.detect_yolo import YOLO_WEIGHTS
+from infrastructure.ia.yolo import YOLO_WEIGHTS
 
 
 def main() -> None:

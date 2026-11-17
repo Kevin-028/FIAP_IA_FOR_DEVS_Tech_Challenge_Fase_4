@@ -1,0 +1,15 @@
+# Projeto Domain: agregados, regras e contratos dos repositórios. Só biblioteca padrão.
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fase4-domain"
+version = "1.0.0"
+description = "Domínio do consultório multimodal (atendimento, anomalia de padrão e plantão)"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["domain*"]

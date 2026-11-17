@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}Hoje{% endblock %}
+{% block content %}
+<div class="cabecalho">
+  <div><h1>Hoje</h1><p>O que está em andamento e o que pede sua atenção.</p></div>
+  <form class="linha-form" method="get" action="/pacientes" role="search">
+    <label class="d-none" for="busca-paciente">Buscar paciente</label>
+    <input class="campo" id="busca-paciente" name="q" placeholder="Buscar paciente pelo nome">
+    <button class="btn btn-primario" type="submit">Nova consulta</button>
+  </form>
+</div>
+
+<div class="grade grade-3 espaco">
+  <div class="cartao metrica"><div class="metrica-rotulo">Consultas em andamento</div><div class="metrica-valor">{{ em_andamento|length }}</div></div>
+  <div class="cartao metrica"><div class="metrica-rotulo">Alertas de dor ativos</div><div class="metrica-valor {{ 'perigo' if alertas_dor }}">{{ alertas_dor|length }}</div></div>
+  <div class="cartao metrica"><div class="metrica-rotulo">Alertas da internação abertos</div><div class="metrica-valor {{ 'perigo' if alertas_internacao }}">{{ alertas_internacao }}</div></div>
+</div>
+
+<div class="grade grade-2">
+  <section class="cartao" aria-labelledby="t-andamento">
+    <div class="cartao-cab"><h2 id="t-andamento">Em andamento</h2></div>
+    {% if em_andamento %}
+    <ul class="lista">
+      {% for c in em_andamento %}
+      <li>
+        <div class="paciente-cab">
+          <div class="avatar" aria-hidden="true">{{ m.iniciais(c.paciente_nome) }}</div>
+          <div><a class="lista-principal" href="/pacientes/{{ c.paciente_id }}">{{ c.paciente_nome }}</a>
+            <div class="lista-sec">Desde {{ c.iniciada_em|hora }}{% if c.alertas_ativos %} · <span class="pill pill-perigo">{{ c.alertas_ativos }} alerta(s)</span>{% endif %}</div></div>
+        </div>
+        <a class="btn btn-sm btn-primario" href="/consulta/{{ c.sessao_id }}">Continuar</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="vazio"><h3>Nenhuma consulta em andamento</h3><p>Busque um paciente para começar.</p><a class="btn" href="/pacientes">Ver pacientes</a></div>
+    {% endif %}
+  </section>
+
+  <section class="cartao" aria-labelledby="t-atencao">
+    <div class="cartao-cab"><h2 id="t-atencao">Precisa de atenção</h2><a href="/alertas">Ver todos</a></div>
+    {% if alertas_dor or alertas_internacao %}
+    <ul class="lista">
+      {% for a in alertas_dor[:6] %}
+      <li class="alerta-item {{ 'ciente' if a.estado == 'ciente' }}">
+        <div><div class="lista-principal">{{ a.paciente_nome }} · {{ m.origem(a.origem) }}</div><div class="lista-sec">{{ a.descricao_sinal }}</div></div>
+        <a class="btn btn-sm" href="/consulta/{{ a.sessao_id }}">Abrir consulta</a>
+      </li>
+      {% endfor %}
+      {% if alertas_internacao %}
+      <li class="alerta-item"><div><div class="lista-principal">Internação</div><div class="lista-sec">{{ alertas_internacao }} alerta(s) aguardando a equipe</div></div><a class="btn btn-sm" href="/alertas?aba=internacao">Revisar</a></li>
+      {% endif %}
+    </ul>
+    {% else %}
+    <div class="vazio"><h3>Tudo em dia</h3><p>Nenhum alerta aguardando ação.</p></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

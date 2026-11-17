@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Sistema{% endblock %}
+{% block content %}
+<div class="cabecalho"><div><h1>Sistema</h1><p>Serviços, modelos baixados e o modelo de anomalia de padrão.</p></div></div>
+{% if erro %}<p class="aviso aviso-perigo" role="alert">{{ erro }}</p>{% endif %}
+<div class="grade grade-2">
+  <section class="cartao" aria-labelledby="t-servicos">
+    <div class="cartao-cab"><h2 id="t-servicos">Serviços e modelos</h2></div>
+    <ul class="lista">
+      {% for item in diagnostico %}
+      <li><div><div class="lista-principal">{{ item.nome }}</div><div class="lista-sec">{{ item.detalhe }}</div></div>
+        {% if item.ok %}<span class="pill pill-sucesso">Pronto</span>{% else %}<span class="pill pill-aviso">Pendente</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  <section class="cartao" aria-labelledby="t-modelo">
+    <div class="cartao-cab"><h2 id="t-modelo">Anomalia de padrão</h2></div>
+    <div class="cartao-corpo pilha">
+      <p class="mb-0">Modelo treinado no corpus de sinais vitais, fora da consulta. Aponta batimentos, pressão ou oxigenação; não emite diagnóstico nem sepse.</p>
+      <form method="post" action="/anomalia/treinar"><button class="btn" type="submit">Treinar novo modelo</button></form>
+      <form class="pilha" method="post" action="/anomalia/avaliar">
+        <div><label class="rotulo" for="modelo_id">Modelo</label>
+          <select class="campo" id="modelo_id" name="modelo_id">{% for m in modelos %}<option value="{{ m.id }}">{{ m.criado_em|data_hora }} · {{ m.id[:8] }}</option>{% else %}<option value="">Nenhum modelo treinado</option>{% endfor %}</select></div>
+        <div><label class="rotulo" for="serie_id">Série do corpus</label><input class="campo" id="serie_id" name="serie_id" value="p000003" required></div>
+        <label class="checar"><input type="checkbox" name="faixa_fixa"> Tentar com faixa fixa (é recusado: não é modelo)</label>
+        <div><button class="btn btn-primario" type="submit">Avaliar série</button></div>
+      </form>
+      {% if leitura %}
+      <div class="aviso {{ 'aviso-perigo' if leitura.resultado == 'anomala' else 'aviso-sucesso' }}" role="status">
+        Série {{ leitura.serie_id }}: {{ 'anômala' if leitura.resultado == 'anomala' else 'compatível com o padrão' }}{% if leitura.sinais %} · {{ leitura.sinais|join(', ')|replace('_', ' ') }}{% endif %}.
+        {% if leitura.alerta_id %}<a href="/alertas?aba=anomalia">Ver alerta</a>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}

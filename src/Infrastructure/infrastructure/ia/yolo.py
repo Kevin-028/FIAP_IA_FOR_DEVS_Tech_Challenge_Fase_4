@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import os
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from infrastructure.caminhos import ROOT
+
 YOLO_WEIGHTS = os.path.join(ROOT, "models", "yolo", "yolov8n.pt")
 
 _MODEL = None
@@ -13,7 +14,7 @@ def detections_of(frame_bgr) -> list[dict]:
     global _MODEL
     if not os.path.isfile(YOLO_WEIGHTS):
         raise FileNotFoundError(
-            "Peso YOLOv8 ausente. Rode: python -m multimodal.download_yolo"
+            "Peso YOLOv8 ausente. Rode: python scripts/download_yolo.py"
         )
     if _MODEL is None:
         from ultralytics import YOLO

@@ -5,7 +5,7 @@ import os
 
 import requests
 
-from multimodal.azure_speech import AzureNotConfigured
+from infrastructure.azure.speech import AzureNotConfigured
 
 
 def language_configured() -> bool:
@@ -47,3 +47,16 @@ def analyze_text(text: str, language: str = "pt") -> dict:
         "sentiment": _post("SentimentAnalysis")["sentiment"],
         "key_phrases": _post("KeyPhraseExtraction")["keyPhrases"],
     }
+
+
+class AnalisadorAzure:
+    """Porta AnalisadorDeTexto (Azure Text Analytics)."""
+
+    def configurado(self) -> bool:
+        return language_configured()
+
+    def faltando(self) -> list[str]:
+        return missing_language()
+
+    def analisar(self, texto: str) -> dict:
+        return analyze_text(texto)

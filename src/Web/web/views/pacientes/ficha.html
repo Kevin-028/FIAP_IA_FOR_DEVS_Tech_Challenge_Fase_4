@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}{{ ficha.paciente.nome }}{% endblock %}
+{% block content %}
+<div class="trilha"><a href="/pacientes">Pacientes</a> / {{ ficha.paciente.nome }}</div>
+<div class="cabecalho">
+  <div class="paciente-cab">
+    <div class="avatar" aria-hidden="true">{{ m.iniciais(ficha.paciente.nome) }}</div>
+    <div><h1>{{ ficha.paciente.nome }}</h1><p>{{ ficha.sessoes|length }} consulta(s) registrada(s)</p></div>
+  </div>
+  <div class="acoes">
+    {% if ficha.em_andamento %}
+    <a class="btn btn-primario btn-grande" href="/consulta/{{ ficha.em_andamento }}">Continuar consulta</a>
+    {% else %}
+    <form method="post" action="/sessoes"><input type="hidden" name="paciente_id" value="{{ ficha.paciente.id }}"><button class="btn btn-primario btn-grande" type="submit">Iniciar consulta</button></form>
+    {% endif %}
+  </div>
+</div>
+{% if erro %}<p class="aviso aviso-perigo" role="alert">{{ erro }}</p>{% endif %}
+<div class="grade grade-atender">
+  <section class="cartao" aria-labelledby="t-hist">
+    <div class="cartao-cab"><h2 id="t-hist">Histórico de consultas</h2></div>
+    {% if ficha.sessoes %}
+    <div class="rolar"><table class="tabela">
+      <thead><tr><th>Início</th><th>Estado</th><th>Alertas de dor</th><th></th></tr></thead>
+      <tbody>
+      {% for s in ficha.sessoes %}
+      <tr>
+        <td>{{ s.iniciada_em|data_hora }}</td>
+        <td>{{ m.estado_sessao(s.estado) }}</td>
+        <td>{{ s.alertas }}{% if s.alertas_ativos %} <span class="pill pill-perigo">{{ s.alertas_ativos }} ativo(s)</span>{% endif %}</td>
+        <td>{% if s.estado == 'em_andamento' %}<a href="/consulta/{{ s.sessao_id }}">Continuar</a>{% else %}<a href="/consulta/{{ s.sessao_id }}/relatorio">Relatório</a>{% endif %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}
+    <div class="vazio"><h3>Primeira consulta</h3><p>O histórico aparece aqui depois do primeiro atendimento.</p></div>
+    {% endif %}
+  </section>
+  <section class="cartao" aria-labelledby="t-dados">
+    <div class="cartao-cab"><h2 id="t-dados">Dados do paciente</h2></div>
+    <form class="cartao-corpo" method="post" action="/pacientes/{{ ficha.paciente.id }}">
+      <label class="rotulo" for="nome">Nome</label>
+      <input class="campo" id="nome" name="nome" value="{{ ficha.paciente.nome }}" required>
+      <p class="ajuda">Corrigir o nome mantém o histórico. Pacientes não são excluídos.</p>
+      <button class="btn" type="submit">Salvar nome</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

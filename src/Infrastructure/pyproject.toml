@@ -1,0 +1,31 @@
+# Projeto Infrastructure: SQLite, modelos de IA, Azure e corpus PhysioNet. Implementa as portas.
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fase4-infrastructure"
+version = "1.0.0"
+description = "Adaptadores do consultório multimodal"
+requires-python = ">=3.11"
+dependencies = [
+    "fase4-domain",
+    "fase4-application",
+    "numpy>=1.26",
+    "requests>=2.31",
+    "opencv-python>=4.8",
+    "mediapipe==0.10.35",
+    "scikit-learn>=1.4",
+    "ultralytics>=8.3.0",
+]
+
+[project.optional-dependencies]
+# Estágio 2 da cascata de dor facial (~1 GB com torch). Sem ele o app roda só o estágio 1.
+estagio2 = ["py-feat==2.1.5"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["infrastructure*"]
+
+[tool.setuptools.package-data]
+"infrastructure.persistencia" = ["schema/*.sql"]

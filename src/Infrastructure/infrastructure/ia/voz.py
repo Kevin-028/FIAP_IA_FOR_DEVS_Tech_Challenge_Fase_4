@@ -29,3 +29,30 @@ def vocal_features(samples, sample_rate: int) -> dict:
         "fatigue": fatigue,
         "respiratory_effort": respiratory,
     }
+
+
+def ler_wav(path: str):
+    """Amostras mono normalizadas (-1..1) e taxa de um WAV PCM 16-bit."""
+    import wave
+
+    with wave.open(path, "rb") as handle:
+        channels = handle.getnchannels()
+        width = handle.getsampwidth()
+        rate = handle.getframerate()
+        raw = handle.readframes(handle.getnframes())
+    if width != 2:
+        raise ValueError("O WAV precisa ser PCM 16-bit.")
+    samples = np.frombuffer(raw, dtype=np.int16).astype(np.float64) / 32768.0
+    if channels > 1:
+        samples = samples.reshape(-1, channels).mean(axis=1)
+    return samples, rate
+
+
+class AnalisadorDeVozNumpy:
+    """Porta AnalisadorDeVoz."""
+
+    def ler_wav(self, caminho: str):
+        return ler_wav(caminho)
+
+    def caracteristicas(self, amostras, taxa: int) -> dict:
+        return vocal_features(amostras, taxa)

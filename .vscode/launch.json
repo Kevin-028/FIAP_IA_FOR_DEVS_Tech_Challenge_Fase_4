@@ -2,37 +2,12 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Flask: Fase 4",
+      "name": "Web: Fase 4 (Flask)",
       "type": "debugpy",
       "request": "launch",
-      "module": "flask",
+      "module": "web.app",
       "cwd": "${workspaceFolder}",
-      "env": {
-        "FLASK_APP": "web/app.py",
-        "FLASK_DEBUG": "1",
-        "FLASK_ENV": "development",
-        "PYTHONPATH": "${workspaceFolder};${workspaceFolder}/web"
-      },
-      "args": [
-        "run",
-        "--host=127.0.0.1",
-        "--port=5000",
-        "--reload",
-        "--no-debugger"
-      ],
       "jinja": true,
-      "console": "integratedTerminal",
-      "justMyCode": true
-    },
-    {
-      "name": "Python: web/app.py",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/web/app.py",
-      "cwd": "${workspaceFolder}",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder};${workspaceFolder}/web"
-      },
       "console": "integratedTerminal",
       "justMyCode": true
     }

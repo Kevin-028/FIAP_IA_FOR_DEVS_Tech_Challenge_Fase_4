@@ -4,19 +4,39 @@
     {
       "label": "Seed plantão",
       "type": "shell",
-      "command": "${workspaceFolder}/.venv/Scripts/python.exe -m hospital.seed",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe -m infrastructure.persistencia.seed",
+      "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": []
     },
     {
-      "label": "pytest Fase 4",
+      "label": "Testes unitários",
       "type": "shell",
-      "command": "${workspaceFolder}/.venv/Scripts/python.exe -m pytest tests/test_fase4.py -q",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe -m pytest tests/unit -q",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Testes de integração",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe -m pytest tests/integration -q",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Testes com Azure real",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe -m pytest -m azure --azure -q",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Todos os testes + cobertura",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe -m pytest --cov --cov-report=term-missing --cov-report=html",
+      "options": { "cwd": "${workspaceFolder}" },
       "group": "test",
       "problemMatcher": []
     }

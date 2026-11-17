@@ -5,11 +5,11 @@ import os
 
 import requests
 
+from application.atendimento.portas import ServicoExternoNaoConfigurado
 
-class AzureNotConfigured(RuntimeError):
-    def __init__(self, missing: list[str]):
-        super().__init__("azure_nao_configurado")
-        self.missing = missing
+
+class AzureNotConfigured(ServicoExternoNaoConfigurado):
+    """Azure sem chave/região no .env (porta: ServicoExternoNaoConfigurado)."""
 
 
 def speech_configured() -> bool:
@@ -23,6 +23,21 @@ def missing_speech() -> list[str]:
     if not os.environ.get("AZURE_SPEECH_REGION"):
         missing.append("AZURE_SPEECH_REGION")
     return missing
+
+
+def issue_speech_token() -> dict:
+    """Token de 10 min para o SDK no navegador. A chave nunca sai do servidor."""
+    missing = missing_speech()
+    if missing:
+        raise AzureNotConfigured(missing)
+    region = os.environ["AZURE_SPEECH_REGION"]
+    response = requests.post(
+        f"https://{region}.api.cognitive.microsoft.com/sts/v1.0/issueToken",
+        headers={"Ocp-Apim-Subscription-Key": os.environ["AZURE_SPEECH_KEY"]},
+        timeout=10,
+    )
+    response.raise_for_status()
+    return {"token": response.text, "region": region}
 
 
 def transcribe_wav(path: str, language: str = "pt-BR") -> str:
@@ -48,3 +63,20 @@ def transcribe_wav(path: str, language: str = "pt-BR") -> str:
     if body.get("RecognitionStatus") != "Success":
         raise RuntimeError(body.get("RecognitionStatus", "speech_failed"))
     return body.get("DisplayText", "")
+
+
+class EmissorDeTokenAzure:
+    """Porta EmissorDeTokenDeFala."""
+
+    def emitir(self) -> dict:
+        return issue_speech_token()
+
+
+class TranscritorAzure:
+    """Porta Transcritor do plantão: WAV 16 kHz mono → texto."""
+
+    def faltando(self) -> list[str]:
+        return missing_speech()
+
+    def transcrever(self, caminho_wav: str) -> str:
+        return transcribe_wav(caminho_wav)

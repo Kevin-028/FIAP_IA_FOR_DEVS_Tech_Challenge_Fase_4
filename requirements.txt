@@ -1,9 +1,11 @@
-flask>=3.0
-python-dotenv>=1.0
-numpy>=1.26
-requests>=2.31
-opencv-python>=4.8
-mediapipe==0.10.35
-scikit-learn>=1.4
-ultralytics>=8.3.0
+# Solução em 4 projetos (como uma solution C#), instalados em modo editável:
+#   src/Domain -> src/Application -> src/Infrastructure -> src/Web
+# Instalação: python -m pip install -r requirements.txt
+-e src/Domain
+-e src/Application
+-e src/Infrastructure
+-e src/Web
+
+# projeto de testes
 pytest>=8.0
+pytest-cov>=5.0

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Exame ao vivo · Internação{% endblock %}
+{% block content %}
+{% set sub = 'monitor' %}{% include "internacao/_cabecalho.html" %}
+<section class="cartao espaco" aria-labelledby="t-monitor">
+  <div class="cartao-cab"><h2 id="t-monitor">Exame ao vivo</h2><span class="legenda">Simulação: o registro PhysioNet (1 medição por hora) chega como de um monitor à beira do leito</span></div>
+  <div class="cartao-corpo" style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:space-between">
+    <div class="acoes">
+      <button class="btn btn-primario" id="replay" type="button">Iniciar leitura</button>
+      <button class="btn" id="pausar-monitor" type="button" disabled>Pausar</button>
+      <label class="d-none" for="velocidade">Velocidade</label>
+      <select class="campo" id="velocidade" style="width:auto"><option value="1">1 medição/s</option><option value="2">2 medições/s</option><option value="5">5 medições/s</option></select>
+    </div>
+    <div class="acoes"><span class="legenda" id="monitor-progresso" aria-live="polite">Pronto para ler.</span><a class="btn" id="alerts-link" href="/alertas?aba=internacao">Alertas</a></div>
+  </div>
+</section>
+<div class="grade grade-sinais espaco">
+  {% for chave, nome, unidade, faixa in [('hr', 'Frequência cardíaca', 'bpm', '45–120'), ('spo2', 'Saturação (SpO2)', '%', '≥ 92'), ('sbp', 'Pressão sistólica', 'mmHg', '90–180'), ('dbp', 'Pressão diastólica', 'mmHg', '50–110')] %}
+  <section class="cartao sinal" data-sinal="{{ chave }}" aria-label="{{ nome }}">
+    <div class="cartao-corpo">
+      <div class="metrica-rotulo">{{ nome }} <span class="legenda">· faixa {{ faixa }}</span></div>
+      <div class="sinal-valor"><span id="v-{{ chave }}">—</span> <small>{{ unidade }}</small></div>
+      <canvas class="grafico" id="g-{{ chave }}" height="70" aria-hidden="true"></canvas>
+    </div>
+  </section>
+  {% endfor %}
+</div>
+<div class="grade grade-2">
+  <section class="cartao" aria-labelledby="t-agora">
+    <div class="cartao-cab"><h2 id="t-agora">Avaliação da medição atual</h2><span class="pill" id="estado-atual">aguardando</span></div>
+    <div class="cartao-corpo"><p class="mb-0" id="motivos-atual">A cada medição: regras clínicas (fora da faixa) e Isolation Forest sobre a série do paciente (fora do padrão).</p></div>
+  </section>
+  <section class="cartao" aria-labelledby="t-registro">
+    <div class="cartao-cab"><h2 id="t-registro">Registro</h2><span class="legenda">Só o que fugiu do normal e os alertas enviados</span></div>
+    <ul class="lista" id="monitor-log" aria-live="polite"><li class="lista-vazia">Nada registrado ainda.</li></ul>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/internacao.js') }}"></script>{% endblock %}

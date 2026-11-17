@@ -1,0 +1,11 @@
+[run]
+source = src/Domain/domain, src/Application/application, src/Infrastructure/infrastructure, src/Web/web
+omit =
+    */__init__.py
+
+[report]
+skip_empty = true
+precision = 1
+
+[html]
+directory = htmlcov

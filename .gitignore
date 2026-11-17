@@ -5,6 +5,8 @@ __pycache__/
 .env
 *.db
 models/yolo/*.pt
+models/pose/*.task
+models/feat/
 hospital_data/fase4/challenge-2019/training/training_setB/
 hospital_data/fase4/challenge-2019/training/training_setA/*
 !hospital_data/fase4/challenge-2019/training/training_setA/p000003.psv
@@ -14,3 +16,9 @@ hospital_data/*.db
 yolov8n.pt
 runs/
 .idea/
+htmlcov/
+.coverage
+*.egg-info/
+analises/dados/
+hospital_data/duvidas/
+.claude/

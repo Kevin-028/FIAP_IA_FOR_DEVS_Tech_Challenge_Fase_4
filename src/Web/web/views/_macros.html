@@ -1,0 +1,39 @@
+{% macro iniciais(nome) -%}
+{%- set partes = (nome or '?').split() -%}
+{{ (partes[0][0] ~ (partes[-1][0] if partes|length > 1 else '')) | upper }}
+{%- endmacro %}
+
+{% macro estado_sessao(estado) -%}
+{% if estado == 'em_andamento' %}<span class="pill pill-primaria">Em andamento</span>{% else %}<span class="pill">Encerrada</span>{% endif %}
+{%- endmacro %}
+
+{% macro estado_alerta(estado) -%}
+{% if estado == 'aberto' or estado == 'open' %}<span class="pill pill-perigo">Aberto</span>
+{% elif estado == 'ciente' or estado == 'acked' %}<span class="pill pill-aviso">Ciente</span>
+{% else %}<span class="pill">Encerrado</span>{% endif %}
+{%- endmacro %}
+
+{% macro veredito(marca) -%}
+<span class="pill {{ {'avaliando': 'pill-aviso', 'confirmada': 'pill-perigo'}.get(marca.veredito, '') }}" data-veredito="{{ marca.id }}">{{ marca.veredito_texto }}</span>
+{%- endmacro %}
+
+{% macro origem(valor) -%}{{ {'face': 'Rosto', 'movimentacao': 'Movimentação', 'relato': 'Relato'}.get(valor, valor) }}{%- endmacro %}
+
+{% macro etapas(atual) -%}
+<ol class="etapas" aria-label="Etapas da consulta">
+  {% for numero, nome in [(1, 'Preparar'), (2, 'Atender'), (3, 'Encerrar')] %}
+  <li class="etapa {{ 'atual' if numero == atual }} {{ 'feita' if numero < atual }}" {% if numero == atual %}aria-current="step"{% endif %}><b>{{ '✓' if numero < atual else numero }}</b>{{ nome }}</li>
+  {% endfor %}
+</ol>
+{%- endmacro %}
+
+{% macro cabecalho_consulta(leitura, atual) -%}
+<div class="trilha"><a href="/pacientes">Pacientes</a> / <a href="/pacientes/{{ leitura.paciente_id }}">{{ leitura.paciente_nome }}</a> / Consulta</div>
+<div class="cabecalho">
+  <div class="paciente-cab">
+    <div class="avatar" aria-hidden="true">{{ iniciais(leitura.paciente_nome) }}</div>
+    <div><h1>{{ leitura.paciente_nome }}</h1><p class="mb-0">{{ estado_sessao(leitura.estado) }}</p></div>
+  </div>
+  {{ etapas(atual) }}
+</div>
+{%- endmacro %}

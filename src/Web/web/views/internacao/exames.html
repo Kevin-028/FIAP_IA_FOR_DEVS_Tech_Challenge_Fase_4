@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Exames · Internação{% endblock %}
+{% block content %}
+{% set sub = 'exames' %}{% include "internacao/_cabecalho.html" %}
+<div class="grade grade-2">
+  <section class="cartao" aria-labelledby="t-video">
+    <div class="cartao-cab"><h2 id="t-video">Vídeo</h2><span class="legenda">Postura (MediaPipe) e área crítica (YOLOv8)</span></div>
+    <div class="cartao-corpo pilha">
+      <div><label class="rotulo" for="file">Arquivo de vídeo</label><input class="campo" id="file" type="file" accept="video/*"></div>
+      <div class="linha-form"><button class="btn" id="cam-start" type="button">Ligar webcam</button><button class="btn" id="cam-rec" type="button" disabled>Gravar 5 s</button></div>
+      <div class="cam-box"><video id="preview" class="cam-video" playsinline muted></video></div>
+      <div><button class="btn btn-primario" id="analyze" type="button">Analisar vídeo</button></div>
+      <pre class="saida" id="video-out" aria-live="polite">Escolha um arquivo ou grave pela webcam.</pre>
+      <p class="ajuda mb-0">{{ openpose_note }}</p>
+    </div>
+  </section>
+  <section class="cartao" aria-labelledby="t-audio">
+    <div class="cartao-cab"><h2 id="t-audio">Áudio</h2><span class="legenda">Azure Speech e Language + traços vocais</span></div>
+    <form class="cartao-corpo pilha" id="audio-form">
+      <div><label class="rotulo" for="audio-file">WAV 16 kHz mono</label><input class="campo" id="audio-file" type="file" accept=".wav,audio/wav"></div>
+      <div class="linha-form"><button class="btn btn-primario" type="submit">Analisar áudio</button><button class="btn" id="sample" type="button">Usar amostra</button></div>
+      <p class="aviso aviso-info mb-0" id="a-status" aria-live="polite">Aguardando um áudio.</p>
+      <div class="cam-leitura">
+        <div><span>Transcrição</span><strong id="a-text">—</strong></div>
+        <div><span>Sentimento</span><strong id="a-sent">—</strong></div>
+        <div><span>Termos críticos</span><strong id="a-crit">—</strong></div>
+        <div><span>Voz</span><strong id="a-voc">—</strong></div>
+        <div><span>Alertas novos</span><strong id="a-alerts">—</strong></div>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/internacao.js') }}"></script>{% endblock %}

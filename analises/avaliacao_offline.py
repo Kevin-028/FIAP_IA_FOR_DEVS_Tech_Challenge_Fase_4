@@ -6,14 +6,14 @@ import os
 
 import numpy as np
 
-from multimodal.fusion import fuse
-from multimodal.movement import movement_anomalies
-from multimodal.pose import posture_deviations
-from multimodal.prescriptions import prescription_anomalies
-from multimodal.video_report import build_video_report
-from multimodal.vitals import vital_anomalies
-from multimodal.vocal import vocal_features
-from multimodal.zones import zone_events
+from domain.plantao.fusion import fuse
+from domain.plantao.movement import movement_anomalies
+from domain.plantao.pose import posture_deviations
+from domain.plantao.prescriptions import prescription_anomalies
+from domain.plantao.video_report import build_video_report
+from domain.plantao.vitals import vital_anomalies
+from infrastructure.ia.voz import vocal_features
+from domain.plantao.zones import zone_events
 
 DATASET_NOTE = (
     "Pacientes p000057 e p000003: PhysioNet Challenge 2019 (HR, O2Sat, SBP, DBP). "

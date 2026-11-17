@@ -1,0 +1,15 @@
+# Projeto Application: casos de uso e portas. Referencia só o Domain.
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fase4-application"
+version = "1.0.0"
+description = "Casos de uso do consultório multimodal"
+requires-python = ">=3.11"
+dependencies = ["fase4-domain"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["application*"]

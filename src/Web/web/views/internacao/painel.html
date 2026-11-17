@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Internação{% endblock %}
+{% block content %}
+{% set sub = 'painel' %}{% include "internacao/_cabecalho.html" %}
+<div class="grade grade-3 espaco">
+  <div class="cartao metrica"><div class="metrica-rotulo">Sinais vitais fora do padrão</div><div class="metrica-valor {{ 'perigo' if vitals }}">{{ vitals|length }}</div><div class="lista-sec">{{ vitals_count }} medições</div></div>
+  <div class="cartao metrica"><div class="metrica-rotulo">Prescrição</div><div class="metrica-valor {{ 'perigo' if prescriptions }}">{{ prescriptions|length }}</div><div class="lista-sec">Droga de alerta e salto de dose</div></div>
+  <div class="cartao metrica"><div class="metrica-rotulo">Movimentação</div><div class="metrica-valor {{ 'perigo' if movement }}">{{ movement|length }}</div><div class="lista-sec">Imobilidade e saída noturna</div></div>
+</div>
+<div class="grade grade-atender">
+  <section class="cartao" aria-labelledby="t-achados">
+    <div class="cartao-cab"><h2 id="t-achados">Achados</h2>{% if vital_source %}<span class="legenda">{{ vital_source }}</span>{% endif %}</div>
+    <div class="rolar"><table class="tabela">
+      <thead><tr><th>Quando</th><th>Tipo</th><th>Detalhe</th></tr></thead>
+      <tbody>
+      {% for v in vitals %}<tr><td>{{ v.recorded_at|data_hora }}</td><td>Sinal vital</td><td>{{ v.signal }} = {{ v.value }} ({{ v.rule }})</td></tr>{% endfor %}
+      {% for p in prescriptions %}<tr><td>{{ p.recorded_at }}</td><td>Prescrição</td><td>{{ p.detail or p.drug }}</td></tr>{% endfor %}
+      {% for mv in movement %}<tr><td>{{ mv.recorded_at|data_hora }}</td><td>Movimentação</td><td>{{ mv.detail or mv.rule }}</td></tr>{% endfor %}
+      {% if not (vitals or prescriptions or movement) %}<tr><td colspan="3" class="text-muted">Plantão estável: nenhum achado.</td></tr>{% endif %}
+      </tbody>
+    </table></div>
+  </section>
+  <section class="cartao" aria-labelledby="t-publicar">
+    <div class="cartao-cab"><h2 id="t-publicar">Enviar à equipe</h2></div>
+    <div class="cartao-corpo">
+      <p>Funde vitais, prescrição e movimentação e envia os achados de nível alto para a lista de alertas. O sistema não prescreve.</p>
+      <button class="btn btn-primario" id="publish" type="button">Enviar alertas</button>
+      <pre class="saida" id="publish-out" aria-live="polite" style="margin-top:.75rem"></pre>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/internacao.js') }}"></script>{% endblock %}

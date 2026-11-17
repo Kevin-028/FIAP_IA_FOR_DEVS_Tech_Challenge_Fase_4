@@ -1,0 +1,19 @@
+<div class="cabecalho">
+  <div><h1>Internação</h1><p>Paciente internado da base PhysioNet: sinais vitais, prescrição, movimentação e exames.</p></div>
+  <form class="linha-form" method="get">
+    <label class="d-none" for="patient_id">Paciente internado</label>
+    <select class="campo" id="patient_id" name="patient_id" onchange="this.form.submit()">
+      {% for patient in patients %}<option value="{{ patient.id }}" {% if patient.id == patient_id %}selected{% endif %}>{{ patient.id }} · {{ patient.diagnosis }}</option>{% endfor %}
+      {% if not patients %}<option value="{{ patient_id }}">{{ patient_id }}</option>{% endif %}
+    </select>
+    <label class="d-none" for="record">Outro registro</label>
+    <input class="campo" id="record" name="record" placeholder="Outro registro (p000123)" style="flex:0 1 200px">
+    <button class="btn" type="submit">Abrir</button>
+  </form>
+</div>
+{% if record_error %}<p class="aviso aviso-perigo" role="alert">{{ record_error }}</p>{% endif %}
+<nav class="abas" aria-label="Seções da internação">
+  <a class="aba {{ 'ativa' if sub == 'painel' }}" href="/internacao?patient_id={{ patient_id }}">Painel</a>
+  <a class="aba {{ 'ativa' if sub == 'exames' }}" href="/internacao/exames?patient_id={{ patient_id }}">Exames de vídeo e áudio</a>
+  <a class="aba {{ 'ativa' if sub == 'monitor' }}" href="/internacao/monitor?patient_id={{ patient_id }}">Monitor</a>
+</nav>

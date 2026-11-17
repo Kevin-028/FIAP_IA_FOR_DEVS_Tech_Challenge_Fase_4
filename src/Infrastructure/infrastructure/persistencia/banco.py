@@ -1,4 +1,4 @@
-"""SQLite do plantão multimodal."""
+"""Conexão SQLite, schema do plantão e migrações versionadas (schema/*.sql)."""
 from __future__ import annotations
 
 import json
@@ -6,7 +6,7 @@ import os
 import sqlite3
 from datetime import datetime, timezone
 
-from .paths import DB_PATH
+from infrastructure.caminhos import DB_PATH
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS patients (
@@ -73,7 +73,38 @@ def connect(db_path: str | None = None) -> sqlite3.Connection:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     conn = sqlite3.connect(path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
+
+
+def _apply_versioned_sql(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS schema_migrations (
+            id TEXT PRIMARY KEY,
+            applied_at TEXT NOT NULL
+        )
+        """
+    )
+    schema_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "schema")
+    if not os.path.isdir(schema_dir):
+        return
+    for name in sorted(os.listdir(schema_dir)):
+        if not name.endswith(".sql") or name.endswith("_down.sql"):
+            continue
+        version = name[: -len(".sql")]
+        found = conn.execute(
+            "SELECT 1 FROM schema_migrations WHERE id = ?",
+            (version,),
+        ).fetchone()
+        if found:
+            continue
+        with open(os.path.join(schema_dir, name), encoding="utf-8") as handle:
+            conn.executescript(handle.read())
+        conn.execute(
+            "INSERT INTO schema_migrations (id, applied_at) VALUES (?, ?)",
+            (version, utcnow()),
+        )
 
 
 def init_db(conn: sqlite3.Connection) -> None:
@@ -83,6 +114,7 @@ def init_db(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE alerts ADD COLUMN acked_at TEXT")
     if "closed_at" not in cols:
         conn.execute("ALTER TABLE alerts ADD COLUMN closed_at TEXT")
+    _apply_versioned_sql(conn)
     conn.commit()
 
 

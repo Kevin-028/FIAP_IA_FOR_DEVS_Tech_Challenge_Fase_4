@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_macros.html" import veredito %}
+{% block title %}Revisão{% endblock %}
+{% block content %}
+<div class="cabecalho"><div><h1>Marcas de atenção</h1><p>Cada suspeita de dor acima do nível 5 (face 6, 8 ou 10) fica gravada (2 s antes e 2 s depois). O validador dá um veredito de apoio; a classificação é sua.</p></div></div>
+<nav class="abas" aria-label="Situação">
+  <a class="aba {{ 'ativa' if aba == 'pendentes' }}" href="/revisao">Para revisar{% if total_pendentes %} <span class="contador">{{ total_pendentes }}</span>{% endif %}</a>
+  <a class="aba {{ 'ativa' if aba == 'classificadas' }}" href="/revisao?aba=classificadas">Classificadas</a>
+</nav>
+<section class="cartao">
+  <ul class="lista">
+    {% for d in duvidas %}
+    <li>
+      <div class="paciente-cab">
+        <img class="miniatura" src="/revisao/{{ d.id }}/quadros/{{ d.quadros // 2 }}.jpg" alt="" loading="lazy" width="56" height="56">
+        <div><a class="lista-principal" href="/revisao/{{ d.id }}">{{ d.paciente_nome or 'Paciente' }}</a> {{ veredito(d) }}
+          <div class="lista-sec">{{ d.criado_em|data_hora }}{% if d.wong_baker_estimado is not none %} · câmera estimou {{ d.wong_baker_estimado }}{% endif %} · {{ d.duracao_s }} s
+            {% if not d.pendente %} · <span class="pill pill-sucesso">{{ d.categoria_texto }}, face {{ d.face_classificada }}</span>{% endif %}</div></div>
+      </div>
+      <a class="btn btn-sm {{ 'btn-primario' if d.pendente }}" href="/revisao/{{ d.id }}">{{ 'Revisar' if d.pendente else 'Ver' }}</a>
+    </li>
+    {% else %}
+    <li class="vazio"><h3>{{ 'Nenhuma marca para revisar' if aba == 'pendentes' else 'Nenhuma marca classificada ainda' }}</h3>
+      <p>Quando a câmera suspeitar de dor numa consulta, o recorte aparece aqui na hora.</p></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

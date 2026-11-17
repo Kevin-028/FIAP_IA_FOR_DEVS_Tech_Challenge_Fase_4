@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}Consulta de {{ leitura.paciente_nome }}{% endblock %}
+{% block content %}
+{% set ativa = leitura.estado == 'em_andamento' %}
+{{ m.cabecalho_consulta(leitura, 2) }}
+<div id="consulta-ao-vivo" data-sessao="{{ leitura.sessao_id }}" data-ativa="{{ 'sim' if ativa else 'nao' }}">
+  <div class="cartao espaco">
+    <div class="cartao-corpo" style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:space-between">
+      <p class="estado-ao-vivo mb-0" id="live-status" aria-live="polite">Microfone e câmera desligados.</p>
+      {% if ativa %}
+      <div class="acoes">
+        <button class="btn btn-primario" id="btn-iniciar" type="button">Iniciar consulta ao vivo</button>
+        <button class="btn d-none" id="btn-parar" type="button">Pausar</button>
+        <a class="btn" id="ir-encerrar" href="/consulta/{{ leitura.sessao_id }}/encerrar">Encerrar consulta</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grade grade-consulta">
+    <div class="pilha col-conversa">
+      <section class="cartao" aria-labelledby="t-conversa">
+        <div class="cartao-cab"><h2 id="t-conversa">Conversa</h2><span class="legenda">Médico e paciente são identificados pela fala</span></div>
+        <div class="cartao-corpo">
+          <div class="locutores" id="locutores"></div>
+          <div class="chat" id="transcript" aria-live="polite"><p class="text-muted mb-0">A conversa aparece aqui quando você iniciar a consulta ao vivo.</p></div>
+          <p class="live-parcial" id="parcial"></p>
+          {% if ativa %}
+          <details class="mais">
+            <summary>Sem microfone? Digite uma fala</summary>
+            <form class="linha-form" id="fala-manual">
+              <label class="d-none" for="fala-manual-papel">Quem falou</label>
+              <select class="campo" id="fala-manual-papel" style="flex:0 0 150px"><option value="paciente">Paciente</option><option value="medico">Médico</option></select>
+              <label class="d-none" for="fala-manual-texto">Fala</label>
+              <input class="campo" id="fala-manual-texto" placeholder="O que foi dito" autocomplete="off">
+              <button class="btn" type="submit">Adicionar</button>
+            </form>
+          </details>
+          {% endif %}
+        </div>
+      </section>
+    </div>
+
+    <div class="pilha col-apoio">
+      <section class="cartao" aria-labelledby="t-duvidas">
+        <div class="cartao-cab"><h2 id="t-duvidas">Marcas de atenção <span class="contador" id="marcas-total" hidden>0</span></h2><span class="legenda">Dor acima do nível 5 gravada (2 s antes e depois); o validador só apoia</span></div>
+        <ul class="marcas" id="duvidas-consulta" aria-live="polite"><li class="lista-vazia">Nenhuma suspeita de dor acima do nível 5 até agora.</li></ul>
+      </section>
+      <section class="cartao" aria-labelledby="t-resumo">
+        <div class="cartao-cab"><h2 id="t-resumo">Resumo clínico <span class="pill" id="resumo-total">0</span></h2><span class="legenda">Confira antes de levar ao prontuário</span></div>
+        <div class="cartao-corpo" id="resumo-clinico"><p class="text-muted mb-0">Medicamentos, doenças, exames, doses e hábitos citados aparecem aqui.</p></div>
+      </section>
+      {% if ativa %}
+      <section class="cartao" aria-labelledby="t-anotacao">
+        <div class="cartao-cab"><h2 id="t-anotacao">Anotação do médico</h2></div>
+        <form class="cartao-corpo pilha" id="obs">
+          <label class="d-none" for="texto">Anotação</label>
+          <textarea class="campo" id="texto" placeholder="Ex.: paciente chegou mancando e relata pontada"></textarea>
+          <div class="linha-form">
+            <label class="checar"><input type="checkbox" id="face_dor"> Rosto com dor</label>
+            <label class="checar"><input type="checkbox" id="mancando"> Mancando</label>
+          </div>
+          <div><button class="btn" type="submit">Registrar anotação</button></div>
+        </form>
+      </section>
+      {% endif %}
+    </div>
+
+    <div class="pilha lado-paciente">
+      <section class="cartao cartao-camera" aria-labelledby="t-camera">
+        <div class="cartao-cab"><h2 id="t-camera">Câmera</h2>{% if ativa %}<button class="btn btn-sm" id="btn-camera" type="button">Ligar câmera</button>{% endif %}</div>
+        <div class="cartao-corpo">
+          <div class="cam-box"><video id="cam-video" class="cam-video" playsinline muted></video><span class="cam-off" id="cam-off">Câmera desligada. Ligue para acompanhar o rosto do paciente.</span></div>
+          <p class="ajuda" id="cam-status">A imagem nunca sai deste computador. Cada suspeita de dor acima do nível 5 grava 2 s antes e 2 s depois para sua revisão; o vídeo contínuo é apagado ao desligar a câmera.</p>
+          <details class="mais">
+            <summary>Detalhes da leitura</summary>
+            <div class="cam-leitura">
+              <div><span>Expressão</span><strong id="cam-expressao">—</strong></div>
+              <div><span>Valência</span><strong id="cam-valencia">—</strong></div>
+              <div><span>Dor (PSPI)</span><strong id="cam-dor">—</strong></div>
+            </div>
+            <div class="cam-barras" id="cam-barras"></div>
+          </details>
+        </div>
+      </section>
+      <section class="cartao" aria-labelledby="t-dor">
+        <div class="cartao-cab"><h2 id="t-dor">Dor agora</h2><span class="legenda">Escala Wong-Baker</span></div>
+        <div class="cartao-corpo">
+          {% set faces = [(0, "😀", "sem dor"), (2, "🙂", "dói um pouquinho"), (4, "😐", "dói um pouco mais"), (6, "🙁", "dói ainda mais"), (8, "😣", "dói muito"), (10, "😭", "pior dor possível")] %}
+          <div class="wb-escala" id="wong-baker" role="group" aria-label="Escala de faces Wong-Baker">
+            {% for valor, emoji, descricao in faces %}
+            {% if ativa %}<button type="button" class="wb-face" data-face="{{ valor }}" title="{{ valor }}: {{ descricao }}" aria-label="{{ valor }}: {{ descricao }}"><span aria-hidden="true">{{ emoji }}</span><small>{{ valor }}</small></button>
+            {% else %}<span class="wb-face" data-face="{{ valor }}" title="{{ valor }}: {{ descricao }}"><span aria-hidden="true">{{ emoji }}</span><small>{{ valor }}</small></span>{% endif %}
+            {% endfor %}
+          </div>
+          <div class="cam-leitura"><div><span>Confirmação</span><strong id="cam-confirmacao">—</strong></div></div>
+          <p class="legenda mb-0">{% if ativa %}Toque na face que o paciente apontar. {% endif %}Contorno cinza: câmera · vermelho: confirmada · traço: paciente. Estimativa observacional.</p>
+        </div>
+      </section>
+
+      <section class="cartao" aria-labelledby="t-alertas">
+        <div class="cartao-cab"><h2 id="t-alertas">Alertas desta consulta</h2></div>
+        <ul class="lista" id="dores" aria-live="polite">
+          {% for a in leitura.alertas_dor %}
+          <li class="alerta-item {{ 'ciente' if a.estado == 'ciente' }}"><div><div class="lista-principal">{{ m.origem(a.origem) }}</div><div class="lista-sec">{{ a.descricao_sinal }}</div></div>{{ m.estado_alerta(a.estado) }}</li>
+          {% else %}
+          <li class="lista-vazia">Nenhum alerta de dor.</li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <section class="cartao" aria-labelledby="t-pontos">
+        <div class="cartao-cab"><h2 id="t-pontos">Pontos de atenção <span class="contador" id="pontos-total">0</span></h2></div>
+        <ul class="pontos" id="pontos"><li class="lista-vazia">Nenhum ponto marcado ainda.</li></ul>
+      </section>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  const sessao = {{ leitura.sessao_id | tojson }};
+  const NOMES = { face: "Rosto", movimentacao: "Movimentação", relato: "Relato" };
+  const ESTADOS = { aberto: ["Aberto", "pill-perigo"], ciente: ["Ciente", "pill-aviso"], encerrado: ["Encerrado", ""] };
+  const lista = document.getElementById("dores");
+  async function agir(url) { await fetch(url, { method: "POST" }); atualizar(); }
+  function pintar(leitura) {
+    lista.replaceChildren();
+    if (!leitura.alertas_dor.length) {
+      const vazio = document.createElement("li");
+      vazio.className = "lista-vazia";
+      vazio.textContent = "Nenhum alerta de dor.";
+      lista.appendChild(vazio);
+      return;
+    }
+    for (const a of leitura.alertas_dor) {
+      const item = document.createElement("li");
+      item.className = "alerta-item" + (a.estado === "ciente" ? " ciente" : "");
+      const texto = document.createElement("div");
+      const titulo = document.createElement("div");
+      titulo.className = "lista-principal";
+      titulo.textContent = NOMES[a.origem] || a.origem;
+      const desc = document.createElement("div");
+      desc.className = "lista-sec";
+      desc.textContent = a.descricao_sinal || "";
+      texto.append(titulo, desc);
+      const lado = document.createElement("div");
+      lado.className = "acoes";
+      const [rotulo, classe] = ESTADOS[a.estado] || [a.estado, ""];
+      const pill = document.createElement("span");
+      pill.className = "pill " + classe;
+      pill.textContent = rotulo;
+      lado.appendChild(pill);
+      if (a.estado !== "encerrado") {
+        if (a.estado === "aberto") {
+          const ciencia = document.createElement("button");
+          ciencia.className = "btn btn-sm";
+          ciencia.textContent = "Ciente";
+          ciencia.onclick = () => agir("/api/alertas-dor/" + a.id + "/ciencia");
+          lado.appendChild(ciencia);
+        }
+        const fechar = document.createElement("button");
+        fechar.className = "btn btn-sm";
+        fechar.textContent = "Encerrar";
+        fechar.onclick = () => agir("/api/alertas-dor/" + a.id + "/encerrar");
+        lado.appendChild(fechar);
+      }
+      item.append(texto, lado);
+      lista.appendChild(item);
+    }
+  }
+  async function atualizar() {
+    try {
+      const r = await fetch("/api/sessoes/" + sessao + "/metrica");
+      if (r.ok) pintar(await r.json());
+    } catch (_) { /* servidor fora do ar: tenta de novo no próximo ciclo */ }
+    try {
+      const r = await fetch("/api/sessoes/" + sessao + "/duvidas");
+      if (r.ok) pintarDuvidas(await r.json());
+    } catch (_) { /* idem */ }
+  }
+  const hora = (iso) => new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  document.addEventListener("marcas-de-atencao", atualizar);  // a câmera avisa assim que grava ou recebe o veredito
+  let ultimasMarcas = "";
+  const vereditosVistos = new Set();
+  /* O veredito vem da fila do servidor, carimbado na marca: mostra o mais recente em "Dor agora"
+     e recarrega os alertas quando um veredito novo chega (a confirmação pode abrir alerta). */
+  function pintarValidador(duvidas) {
+    const avaliando = duvidas.filter((d) => d.avaliando).length;
+    const avaliada = duvidas.find((d) => !d.avaliando);
+    const linha = document.getElementById("cam-confirmacao");
+    if (avaliando) linha.textContent = avaliando === 1 ? "validador avaliando…" : "validador: " + avaliando + " marcas na fila";
+    else if (avaliada) linha.textContent = avaliada.veredito_texto;
+    if (avaliada) {
+      const face = avaliada.veredito === "confirmada" ? Number(avaliada.veredito_texto.match(/face (\d+)/)?.[1]) : null;
+      for (const b of document.querySelectorAll("#wong-baker .wb-face")) {
+        b.classList.toggle("confirmada", face !== null && Number(b.dataset.face) === face);
+      }
+    }
+    const novos = duvidas.filter((d) => !d.avaliando && !vereditosVistos.has(d.id));
+    novos.forEach((d) => vereditosVistos.add(d.id));
+    if (novos.some((d) => d.veredito === "confirmada") && window.consultaAoVivo) window.consultaAoVivo.carregar();
+  }
+  function pintarDuvidas(duvidas) {
+    const assinatura = JSON.stringify(duvidas);
+    if (assinatura === ultimasMarcas) return;  // sem mudança: não recarrega as miniaturas a cada ciclo
+    ultimasMarcas = assinatura;
+    pintarValidador(duvidas);
+    const alvo = document.getElementById("duvidas-consulta");
+    const total = document.getElementById("marcas-total");
+    const pendentes = duvidas.filter((d) => d.pendente).length;
+    total.hidden = !pendentes;
+    total.textContent = pendentes;
+    alvo.replaceChildren();
+    if (!duvidas.length) {
+      const vazio = document.createElement("li");
+      vazio.className = "lista-vazia";
+      vazio.textContent = "Nenhuma suspeita de dor acima do nível 5 até agora.";
+      alvo.appendChild(vazio);
+      return;
+    }
+    for (const d of duvidas) {
+      const item = document.createElement("li");
+      item.className = "marca" + (d.pendente ? " pendente" : "");
+      const miniatura = document.createElement("img");
+      miniatura.alt = "Rosto do paciente na suspeita das " + hora(d.criado_em);
+      miniatura.loading = "lazy";
+      miniatura.src = "/revisao/" + d.id + "/quadros/" + Math.floor(d.quadros / 2) + ".jpg";
+      const titulo = document.createElement("div");
+      titulo.className = "lista-principal";
+      titulo.textContent = hora(d.criado_em) + " · " + d.duracao_s + " s";
+      const veredito = document.createElement("span");
+      veredito.className = "pill " + ({ avaliando: "pill-aviso", confirmada: "pill-perigo" }[d.veredito] || "");
+      veredito.textContent = d.veredito_texto;
+      item.append(miniatura, titulo, veredito);
+      if (!d.pendente) {
+        const medico = document.createElement("div");
+        medico.className = "lista-sec";
+        medico.textContent = "Você: " + d.categoria_texto + ", face " + d.face_classificada;
+        item.append(medico);
+      }
+      const link = document.createElement("a");
+      link.className = "btn btn-sm" + (d.pendente ? " btn-primario" : "");
+      link.href = "/revisao/" + d.id;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = d.pendente ? "Classificar" : "Ver";
+      item.append(link);
+      alvo.appendChild(item);
+    }
+  }
+  const form = document.getElementById("obs");
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const face = document.getElementById("face_dor").checked;
+      const mancando = document.getElementById("mancando").checked;
+      const r = await fetch("/api/sessoes/" + sessao + "/observacao", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texto: document.getElementById("texto").value, face_dor: face, mancando,
+                               face: face ? "dor na face" : "", postura: mancando ? "mancando" : "" }),
+      });
+      if (r.ok) { pintar(await r.json()); form.reset(); }
+    });
+    setInterval(atualizar, 3000);
+  }
+  atualizar();
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.40.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js"></script>
+<script src="{{ url_for('static', filename='js/consulta_ao_vivo.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/camera_facial.js') }}"></script>
+{% endblock %}

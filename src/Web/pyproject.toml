@@ -1,0 +1,25 @@
+# Projeto Web (MVC): controllers, view models, views e composição das dependências.
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fase4-web"
+version = "1.0.0"
+description = "Interface Flask do consultório multimodal"
+requires-python = ">=3.11"
+dependencies = [
+    "fase4-domain",
+    "fase4-application",
+    "fase4-infrastructure",
+    "flask>=3.0",
+    "python-dotenv>=1.0",
+    "injector>=0.24",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["web*"]
+
+[tool.setuptools.package-data]
+web = ["views/**/*", "static/**/*"]

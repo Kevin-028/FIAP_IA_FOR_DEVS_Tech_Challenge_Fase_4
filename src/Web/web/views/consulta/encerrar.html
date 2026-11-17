@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}Encerrar consulta{% endblock %}
+{% block content %}
+{{ m.cabecalho_consulta(leitura, 3) }}
+{% set ativos = leitura.alertas_dor | selectattr('estado', 'ne', 'encerrado') | list %}
+{% if ativos %}<p class="aviso espaco" role="status">{{ ativos|length }} alerta(s) de dor ainda ativo(s). Eles continuam na lista de alertas depois de encerrar.</p>{% endif %}
+<div class="grade grade-atender">
+  <div class="pilha">
+    <section class="cartao" aria-labelledby="t-pontos">
+      <div class="cartao-cab"><h2 id="t-pontos">Pontos de atenção</h2></div>
+      <ul class="lista">
+        {% for p in conversa.pontos %}
+        <li><div><div class="lista-principal">{{ p.categoria }}{% if p.severidade == 'alta' %} <span class="pill pill-perigo">alta</span>{% endif %}</div><div class="lista-sec">“{{ p.trecho }}” · {{ p.motivo }}</div></div></li>
+        {% else %}<li class="lista-vazia">Nenhum ponto de atenção marcado.</li>{% endfor %}
+      </ul>
+    </section>
+    <section class="cartao" aria-labelledby="t-resumo">
+      <div class="cartao-cab"><h2 id="t-resumo">Resumo clínico</h2></div>
+      <div class="cartao-corpo">
+        {% for grupo in conversa.resumo_clinico %}
+        <div class="resumo-grupo"><span class="resumo-tipo">{{ grupo.tipo }}</span><span class="resumo-chips">{% for item in grupo.itens %}<span class="chip">{% if item.negada %}não: {% endif %}{{ item.texto }}{% if item.medico %} (médico){% endif %}</span>{% endfor %}</span></div>
+        {% else %}<p class="text-muted mb-0">Nada citado na conversa.</p>{% endfor %}
+      </div>
+    </section>
+  </div>
+  <div class="pilha">
+    <section class="cartao" aria-labelledby="t-alertas">
+      <div class="cartao-cab"><h2 id="t-alertas">Alertas de dor</h2></div>
+      <ul class="lista">
+        {% for a in leitura.alertas_dor %}
+        <li class="alerta-item {{ 'ciente' if a.estado == 'ciente' }}"><div><div class="lista-principal">{{ m.origem(a.origem) }}</div><div class="lista-sec">{{ a.descricao_sinal }}</div></div>
+          <div class="acoes">{{ m.estado_alerta(a.estado) }}{% if a.estado != 'encerrado' %}<button class="btn btn-sm" type="button" data-encerrar="{{ a.id }}">Encerrar</button>{% endif %}</div></li>
+        {% else %}<li class="lista-vazia">Nenhum alerta de dor nesta consulta.</li>{% endfor %}
+      </ul>
+    </section>
+    <section class="cartao" aria-labelledby="t-fim">
+      <div class="cartao-cab"><h2 id="t-fim">Finalizar</h2></div>
+      <form class="cartao-corpo" method="post" action="/sessoes/{{ leitura.sessao_id }}/encerrar">
+        <p>A conversa é guardada e o relatório fica disponível na ficha do paciente. Uma consulta encerrada não reabre.</p>
+        <div class="acoes">
+          <button class="btn btn-primario btn-grande" type="submit">Encerrar e ver relatório</button>
+          <a class="btn" href="/consulta/{{ leitura.sessao_id }}">Voltar ao atendimento</a>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll("[data-encerrar]").forEach((b) => b.addEventListener("click", async () => {
+  await fetch("/api/alertas-dor/" + b.dataset.encerrar + "/encerrar", { method: "POST" });
+  location.reload();
+}));
+</script>
+{% endblock %}

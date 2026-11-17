@@ -2,12 +2,18 @@
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
   "python.terminal.activateEnvironment": true,
   "python.analysis.extraPaths": [
-    "${workspaceFolder}",
-    "${workspaceFolder}/web"
+    "${workspaceFolder}/src/Domain",
+    "${workspaceFolder}/src/Application",
+    "${workspaceFolder}/src/Infrastructure",
+    "${workspaceFolder}/src/Web"
   ],
   "python.envFile": "${workspaceFolder}/.env",
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": ["tests"],
   "files.exclude": {
     "**/__pycache__": true,
-    "**/.pytest_cache": true
+    "**/.pytest_cache": true,
+    "**/*.egg-info": true
   }
 }

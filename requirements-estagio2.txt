@@ -1,0 +1,4 @@
+# Estágio 2 da cascata de dor facial (opcional, ~1 GB com torch).
+# Sem ele o app roda só o estágio 1 (MediaPipe no navegador).
+# Instalação: python -m pip install -r requirements-estagio2.txt
+-e src/Infrastructure[estagio2]

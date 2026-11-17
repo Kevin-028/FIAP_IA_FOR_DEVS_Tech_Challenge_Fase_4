@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}Preparar consulta{% endblock %}
+{% block content %}
+{{ m.cabecalho_consulta(leitura, 1) }}
+<div class="grade grade-atender">
+  <section class="cartao" aria-labelledby="t-antes">
+    <div class="cartao-cab"><h2 id="t-antes">Antes de começar</h2></div>
+    <form class="cartao-corpo pilha" method="get" action="/consulta/{{ leitura.sessao_id }}">
+      <label class="checar"><input type="checkbox" name="ciente" required>
+        <span><b>O paciente foi avisado</b> de que a conversa é transcrita e a câmera estima a dor pelo rosto. A imagem não sai deste computador; cada suspeita de dor acima do nível 5 fica gravada aqui (2 s antes e 2 s depois) para revisão médica, e o restante do vídeo é apagado ao desligar a câmera.</span></label>
+      <div>
+        <div class="linha-form">
+          <button class="btn" type="button" id="testar-microfone">Testar microfone</button>
+          <button class="btn" type="button" id="testar-camera">Testar câmera</button>
+        </div>
+        <p class="ajuda" id="teste-status" aria-live="polite">Opcional: confira os dispositivos antes de iniciar.</p>
+      </div>
+      <div class="cam-box" style="max-width: 360px"><video id="teste-video" class="cam-video" playsinline muted></video><span class="cam-off" id="teste-off">Prévia da câmera</span></div>
+      <div><button class="btn btn-primario btn-grande" type="submit">Começar atendimento</button></div>
+    </form>
+  </section>
+  <section class="cartao" aria-labelledby="t-recursos">
+    <div class="cartao-cab"><h2 id="t-recursos">Recursos desta máquina</h2><a href="/sistema">Sistema</a></div>
+    <ul class="lista">
+      {% for item in diagnostico %}
+      <li><div><div class="lista-principal">{{ item.nome }}</div><div class="lista-sec">{{ item.detalhe }}</div></div>
+        {% if item.ok %}<span class="pill pill-sucesso">Pronto</span>{% else %}<span class="pill pill-aviso">Pendente</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    <p class="cartao-corpo ajuda mb-0">Sem Azure, a conversa pode ser digitada. Sem Py-Feat, a dor usa só o estágio 1 da câmera.</p>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  const status = document.getElementById("teste-status");
+  let stream = null;
+  document.getElementById("testar-microfone").addEventListener("click", async () => {
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+      s.getTracks().forEach((t) => t.stop());
+      status.textContent = "Microfone liberado.";
+    } catch (erro) { status.textContent = "Microfone indisponível: " + (erro.message || erro.name); }
+  });
+  document.getElementById("testar-camera").addEventListener("click", async () => {
+    try {
+      stream = stream || await navigator.mediaDevices.getUserMedia({ video: true });
+      const video = document.getElementById("teste-video");
+      video.srcObject = stream;
+      await video.play();
+      document.getElementById("teste-off").classList.add("d-none");
+      status.textContent = "Câmera liberada. Centralize o rosto do paciente.";
+    } catch (erro) { status.textContent = "Câmera indisponível: " + (erro.message || erro.name); }
+  });
+  window.addEventListener("beforeunload", () => stream && stream.getTracks().forEach((t) => t.stop()));
+})();
+</script>
+{% endblock %}

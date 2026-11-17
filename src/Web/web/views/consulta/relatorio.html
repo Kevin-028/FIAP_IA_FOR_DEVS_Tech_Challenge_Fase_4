@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}Relatório · {{ relatorio.paciente_nome }}{% endblock %}
+{% block content %}
+<div class="trilha"><a href="/pacientes">Pacientes</a> / <a href="/pacientes/{{ relatorio.paciente_id }}">{{ relatorio.paciente_nome }}</a> / Relatório</div>
+<div class="cabecalho">
+  <div><h1>Relatório da consulta</h1><p>{{ relatorio.paciente_nome }} · {{ m.estado_sessao(relatorio.estado) }}</p></div>
+  <div class="acoes"><button class="btn" type="button" onclick="window.print()">Imprimir</button><a class="btn btn-primario" href="/pacientes/{{ relatorio.paciente_id }}">Voltar à ficha</a></div>
+</div>
+<article class="cartao relatorio"><div class="cartao-corpo">
+  <h2>Dor apontada</h2>
+  <ul>{% for a in relatorio.alertas_dor %}<li>{{ m.origem(a.origem) }}: {{ a.descricao_sinal }} ({{ a.estado }})</li>{% else %}<li>Sem alerta de dor.</li>{% endfor %}</ul>
+  <h2>Observações da consulta</h2>
+  <dl>
+    <dt>Voz</dt><dd>{{ relatorio.voz.alteracao_vocal or 'Sem alteração registrada' }}</dd>
+    <dt>Postura</dt><dd>{{ relatorio.desvios.postura or '—' }}</dd>
+    <dt>Rosto</dt><dd>{{ relatorio.desvios.face or '—' }}</dd>
+    <dt>Objetos e áreas</dt><dd>{{ relatorio.desvios.objetos_areas or '—' }}</dd>
+    <dt>Termos críticos</dt><dd>{{ relatorio.desvios.termos_criticos or '—' }}</dd>
+  </dl>
+  <h2>Pontos de atenção</h2>
+  <ul>{% for p in conversa.pontos %}<li><b>{{ p.categoria }}</b>{% if p.severidade == 'alta' %} (alta){% endif %}: “{{ p.trecho }}” — {{ p.motivo }} · fala {{ p.ordem }}</li>{% else %}<li>Nenhum ponto de atenção marcado.</li>{% endfor %}</ul>
+  <h2>Resumo clínico</h2>
+  {% for grupo in conversa.resumo_clinico %}
+  <div class="resumo-grupo"><span class="resumo-tipo">{{ grupo.tipo }}</span><span class="resumo-chips">{% for item in grupo.itens %}<span class="chip">{% if item.negada %}não: {% endif %}{{ item.texto }}{% if item.medico %} (médico){% endif %}</span>{% endfor %}</span></div>
+  {% else %}<p class="text-muted">Nada citado na conversa.</p>{% endfor %}
+  <h2>Transcrição completa</h2>
+  {% for f in conversa.falas %}
+  <div class="fala-relatorio"><b>{{ {'medico': 'Médico', 'paciente': 'Paciente', 'acompanhante': 'Acompanhante'}.get(f.papel, f.locutor or 'Fala') }}</b>{{ f.texto }}</div>
+  {% else %}<p class="text-muted">Nenhuma fala registrada.</p>{% endfor %}
+  <p class="ajuda">Apoio à observação clínica. Não é diagnóstico, escore validado de dor nem prescrição.</p>
+</div></article>
+{% endblock %}

@@ -6,7 +6,8 @@ import json
 import os
 from datetime import datetime, timedelta, timezone
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from infrastructure.caminhos import ROOT
+
 DATA = os.path.join(ROOT, "hospital_data", "fase4", "challenge-2019", "training")
 CHOICE = os.path.join(ROOT, "hospital_data", "fase4", "challenge2019_demo.json")
 BASE = datetime(2019, 4, 1, tzinfo=timezone.utc)
@@ -36,8 +37,7 @@ def read_record(path: str) -> list[dict]:
                 "sbp": int(round(sbp)),
                 "dbp": int(round(dbp)),
                 "spo2": int(round(spo2)),
-                "sepsis": str(row.get("SepsisLabel") or "0").strip() == "1",
-            })
+            })  # SepsisLabel nunca é lido: o sistema não fala de sepse (RN-12)
     return rows
 
 
@@ -88,13 +88,12 @@ def series_of(record: str, *, role: str | None = None) -> dict | None:
         return None
     alert = role == "alert" or (role is None and any(_abnormal(row) for row in full))
     rows = demo_window(full, alert=alert)
-    sepsis = any(row["sepsis"] for row in full)
     return {
         "record": record_id,
         "set": folder,
         "role": "alert" if alert else "stable",
         "rows": rows,
-        "diagnosis": "Sepse no registro" if sepsis else "Sem sepse no registro",
+        "diagnosis": "Sinais vitais fora da faixa" if alert else "Sinais vitais estáveis",
         "notes": (
             f"PhysioNet Challenge 2019, {folder}. "
             f"{len(rows)} horas com HR, O2Sat, SBP e DBP."
@@ -119,7 +118,7 @@ def choose() -> dict:
             record = name[:-4]
             if alert is None and any(flags) and any(row["spo2"] < 92 for row in rows):
                 alert = record
-            if stable is None and not any(flags) and not any(row["sepsis"] for row in rows):
+            if stable is None and not any(flags):
                 stable = record
             if stable and alert:
                 break
@@ -168,3 +167,13 @@ def demo_series() -> dict | None:
         item["role"] = meta.get("role") or item["role"]
         series[record] = item
     return series
+
+
+class FonteChallenge2019:
+    """Porta FonteDeSeries: registros PhysioNet escolhidos para o plantão de demonstração."""
+
+    def serie(self, record: str) -> dict | None:
+        return series_of(record)
+
+    def paciente_padrao(self) -> str:
+        return default_patient()

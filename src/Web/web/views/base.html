@@ -1,75 +1,61 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}FIAP — Fase 4{% endblock %}</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}" />
-</head>
-<body class="fiap-app">
-  <div class="fiap-shell">
-    {% include "partials/sidebar.html" %}
-    <div class="fiap-workspace">
-      <header class="fiap-topbar">
-        <button type="button" class="fiap-sidebar-toggle" id="fiapSidebarToggle"
-                aria-controls="fiapSidebar" aria-expanded="false" aria-label="Abrir menu">
-          <span></span><span></span><span></span>
-        </button>
-        <div class="fiap-topbar-title">
-          <span class="fiap-topbar-kicker">Tech Challenge</span>
-          <strong>{% block page_heading %}Fase 4{% endblock %}</strong>
-        </div>
-        <div class="fiap-topbar-actions">
-          <a href="/alertas" class="btn btn-sm fiap-btn-primary">Alertas{% if open_alert_count %} ({{ open_alert_count }}){% endif %}</a>
-        </div>
-      </header>
-      <main class="fiap-main">
-        {% block content %}{% endblock %}
-      </main>
-      <footer class="fiap-footer">
-        <span>{{ edu_disclaimer }}</span>
-      </footer>
-    </div>
-  </div>
-  <div class="fiap-sidebar-backdrop" id="fiapSidebarBackdrop" hidden></div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Consultório{% endblock %} · Consultório multimodal</title>
   <script>
-    (function () {
-      var shell = document.querySelector(".fiap-shell");
-      var btn = document.getElementById("fiapSidebarToggle");
-      var backdrop = document.getElementById("fiapSidebarBackdrop");
-      if (!shell || !btn) return;
-
-      function setOpen(open) {
-        shell.classList.toggle("sidebar-open", open);
-        btn.setAttribute("aria-expanded", open ? "true" : "false");
-        btn.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu");
-        if (backdrop) backdrop.hidden = !open;
-      }
-
-      function isDesktop() {
-        return window.matchMedia("(min-width: 992px)").matches;
-      }
-
-      btn.addEventListener("click", function () {
-        if (isDesktop()) return;
-        setOpen(!shell.classList.contains("sidebar-open"));
-      });
-      if (backdrop) {
-        backdrop.addEventListener("click", function () {
-          if (isDesktop()) return;
-          setOpen(false);
-        });
-      }
-      document.addEventListener("keydown", function (event) {
-        if (event.key !== "Escape" || isDesktop()) return;
-        setOpen(false);
-      });
-      window.addEventListener("resize", function () {
-        if (isDesktop()) setOpen(false);
-      });
-    })();
+    /* aplica o tema salvo antes de desenhar a página (sem piscar) */
+    try { var t = localStorage.getItem("tema"); if (t === "claro" || t === "escuro") document.documentElement.dataset.tema = t; } catch (e) {}
   </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/clinica.css') }}">
+</head>
+<body>
+<div class="app">
+  <aside class="menu">
+    <a class="marca" href="/" aria-label="Início">
+      <span class="marca-icone" aria-hidden="true">+</span>
+      <span><strong>Consultório</strong><small>Apoio à consulta</small></span>
+    </a>
+    <nav aria-label="Principal">
+      <a class="menu-link {{ 'ativo' if secao == 'hoje' }}" href="/" {% if secao == 'hoje' %}aria-current="page"{% endif %}>Hoje</a>
+      <a class="menu-link {{ 'ativo' if secao == 'pacientes' }}" href="/pacientes" {% if secao == 'pacientes' %}aria-current="page"{% endif %}>Pacientes</a>
+      <a class="menu-link {{ 'ativo' if secao == 'alertas' }}" href="/alertas" {% if secao == 'alertas' %}aria-current="page"{% endif %}>Alertas{% if alertas_ativos %} <span class="contador" aria-label="{{ alertas_ativos }} alertas ativos">{{ alertas_ativos }}</span>{% endif %}</a>
+      <a class="menu-link {{ 'ativo' if secao == 'revisao' }}" href="/revisao" {% if secao == 'revisao' %}aria-current="page"{% endif %}>Revisão{% if duvidas_pendentes %} <span class="pill pill-aviso" aria-label="{{ duvidas_pendentes }} marcas para revisar">{{ duvidas_pendentes }}</span>{% endif %}</a>
+    </nav>
+    <nav aria-label="Ferramentas">
+      <div class="menu-titulo">Ferramentas</div>
+      <a class="menu-link {{ 'ativo' if secao == 'internacao' }}" href="/internacao" {% if secao == 'internacao' %}aria-current="page"{% endif %}>Internação</a>
+      <a class="menu-link {{ 'ativo' if secao == 'sistema' }}" href="/sistema" {% if secao == 'sistema' %}aria-current="page"{% endif %}>Sistema{% if pendencias_sistema %} <span class="pill pill-aviso">{{ pendencias_sistema }}</span>{% endif %}</a>
+    </nav>
+    <div class="menu-fim">
+      <div class="tema" id="tema" role="group" aria-label="Tema">
+        <button type="button" data-tema="auto" aria-pressed="true" title="Seguir o sistema operacional">Auto</button>
+        <button type="button" data-tema="claro" aria-pressed="false">Claro</button>
+        <button type="button" data-tema="escuro" aria-pressed="false">Escuro</button>
+      </div>
+      <div class="menu-rodape">Demo educacional FIAP · Fase 4</div>
+    </div>
+  </aside>
+  <div>
+    <main class="conteudo" id="conteudo">{% block content %}{% endblock %}</main>
+    <footer class="rodape">{{ edu_disclaimer }}</footer>
+  </div>
+</div>
+<script>
+(() => {
+  const raiz = document.documentElement;
+  const botoes = document.querySelectorAll("#tema button");
+  const marcar = (tema) => botoes.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tema === tema)));
+  const aplicar = (tema) => {
+    if (tema === "auto") delete raiz.dataset.tema; else raiz.dataset.tema = tema;
+    try { if (tema === "auto") localStorage.removeItem("tema"); else localStorage.setItem("tema", tema); } catch (e) {}
+    marcar(tema);
+  };
+  marcar(raiz.dataset.tema || "auto");
+  botoes.forEach((b) => b.addEventListener("click", () => aplicar(b.dataset.tema)));
+})();
+</script>
+{% block scripts %}{% endblock %}
 </body>
 </html>
